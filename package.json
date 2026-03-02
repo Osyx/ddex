@@ -1,6 +1,6 @@
 {
   "name": "discord-mcd",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "module": "src/index.ts",
   "dependencies": {
     "csv-parse": "^6.1.0",
