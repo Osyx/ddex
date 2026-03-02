@@ -39,6 +39,23 @@ export const cluster = (counts: Map<string, number>): WordGroup[] => {
   const groups: WordGroup[] = [];
 
   for (const variants of buckets.values()) {
+    // Re-sort: frequency descending (primary) then normalised form (secondary)
+    // so the most-frequent word still wins the canonical slot while similar-
+    // looking words are adjacent, meaning the scan over group representatives
+    // terminates quickly.
+    variants.sort(
+      (a, b) =>
+        b.count - a.count || normalizeRepeats(a.word).localeCompare(normalizeRepeats(b.word)),
+    );
+
+    // Guard: skip edit-distance merging for degenerate buckets to cap O(n²).
+    if (variants.length > 50) {
+      for (const variant of variants) {
+        groups.push({ canonical: variant.word, total: variant.count, variants: [variant] });
+      }
+      continue;
+    }
+
     // Within a phonetic bucket, further merge by edit distance
     const merged: VariantCount[][] = [];
 
