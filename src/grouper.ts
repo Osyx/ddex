@@ -2,13 +2,24 @@ import { doubleMetaphone } from "double-metaphone";
 import { distance as levenshtein } from "fastest-levenshtein";
 import type { WordGroup, VariantCount } from "./types.js";
 
+/** Collapse runs of 3+ of the same character to 2, to normalise elongations like `niiice` → `niice`. */
+const normalizeRepeats = (word: string): string => word.replace(/(.)\1{2,}/gu, "$1$1");
+
 const phoneticKey = (word: string): string => {
-  const [primary = "", secondary = ""] = doubleMetaphone(word);
+  const [primary = "", secondary = ""] = doubleMetaphone(normalizeRepeats(word));
   return primary !== "" ? primary : secondary !== "" ? secondary : word;
 };
 
-const editThreshold = (wordLen: number): number => {
-  return Math.max(1, Math.floor(wordLen / 3));
+/**
+ * Max edit distance allowed for two words to be considered variants.
+ * Uses the shorter word's normalised length so short words (≤ 3 chars) are
+ * never fuzzily merged, preventing cross-language false positives like
+ * `typ`/`top` or `lol`/`loli`.
+ */
+const editThreshold = (minNormLen: number): number => {
+  if (minNormLen <= 3) return 0;
+  if (minNormLen <= 6) return 1;
+  return 2;
 };
 
 /** Cluster a frequency map into fuzzy word groups. */
@@ -37,9 +48,11 @@ export const cluster = (counts: Map<string, number>): WordGroup[] => {
         // Compare against the most-frequent word in this group (first element)
         const representative = group[0]?.word;
         if (representative === undefined) continue;
-        const maxLen = Math.max(variant.word.length, representative.length);
-        const threshold = editThreshold(maxLen);
-        if (levenshtein(variant.word, representative) <= threshold) {
+        const normVariant = normalizeRepeats(variant.word);
+        const normRep = normalizeRepeats(representative);
+        const minLen = Math.min(normVariant.length, normRep.length);
+        const threshold = editThreshold(minLen);
+        if (levenshtein(normVariant, normRep) <= threshold) {
           group.push(variant);
           placed = true;
           break;

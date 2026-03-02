@@ -66,17 +66,46 @@ describe("cluster", () => {
   });
 
   test("merges by edit distance within phonetic bucket", () => {
-    // typ / typo are close in edit distance and phonetically similar
+    // longer words (> 3 chars normalised) with edit distance 1 should merge
     const counts = new Map([
-      ["typ", 3],
-      ["typo", 5],
+      ["colour", 8],
+      ["color", 2],
     ]);
     const groups = cluster(counts);
-    // Should merge into 1 or 2 groups; at minimum typo should be canonical if in same group
-    const combined = groups.find((g) => g.variants.some((v) => v.word === "typ"));
-    if (combined?.variants.some((v) => v.word === "typo")) {
-      expect(combined.canonical).toBe("typo");
-    }
+    const combined = groups.find((g) => g.variants.some((v) => v.word === "colour"));
+    expect(combined?.variants.some((v) => v.word === "color")).toBe(true);
+    expect(combined?.canonical).toBe("colour");
+  });
+
+  test("does not merge short words (<=3 chars) with edit distance 1", () => {
+    // typ / top share phonetic key TP but are different words — should stay separate
+    const counts = new Map([
+      ["typ", 5],
+      ["top", 3],
+    ]);
+    const groups = cluster(counts);
+    expect(groups).toHaveLength(2);
+  });
+
+  test("does not merge across large length differences", () => {
+    // tror / terror share phonetic key TRR but edit distance 2 exceeds threshold for minLen 4
+    const counts = new Map([
+      ["tror", 10],
+      ["terror", 5],
+    ]);
+    const groups = cluster(counts);
+    expect(groups).toHaveLength(2);
+  });
+
+  test("normalises repeated characters to merge elongations", () => {
+    // niiice (3 i's) normalises to niice before comparing with nice
+    const counts = new Map([
+      ["nice", 10],
+      ["niiice", 3],
+    ]);
+    const groups = cluster(counts);
+    const combined = groups.find((g) => g.variants.some((v) => v.word === "nice"));
+    expect(combined?.variants.some((v) => v.word === "niiice")).toBe(true);
   });
 
   test("total is sum of all variant counts in a group", () => {
