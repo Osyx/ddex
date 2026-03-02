@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "path";
-import { Readable } from "stream";
 import { findPrediction, findEventsFile, runPrediction } from "../../src/predictor.js";
 import { createProgress } from "../../src/progress.js";
 

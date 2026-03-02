@@ -8,6 +8,7 @@ import { createWordDb } from "./db.js";
 import { resolveExport } from "./extractor.js";
 import { runPrediction } from "./predictor.js";
 import { createProgress } from "./progress.js";
+import { showHelp, exitError, requireExportPath } from "./cmd.js";
 import { version } from "../package.json";
 
 const HELP = `
@@ -60,8 +61,7 @@ const parseWordsArgs = (args: string[]) => {
     const arg = args[i];
     if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
-      console.log(WORDS_HELP);
-      process.exit(0);
+      showHelp(WORDS_HELP);
     } else if (arg === "--top") {
       const val = args[++i];
       const n = parseInt(val ?? "", 10);
@@ -91,9 +91,7 @@ const parseWordsArgs = (args: string[]) => {
     } else if (!arg.startsWith("-")) {
       exportPath = arg;
     } else {
-      console.error(`Unknown option: ${arg}`);
-      console.error(WORDS_HELP);
-      process.exit(1);
+      exitError(`Unknown option: ${arg}`, WORDS_HELP);
     }
   }
 
@@ -107,9 +105,7 @@ const parseWordsArgs = (args: string[]) => {
   }
 
   if (!exportPath) {
-    console.error("Error: path-to-export is required\n");
-    console.error(WORDS_HELP);
-    process.exit(1);
+    exitError("Error: path-to-export is required\n", WORDS_HELP);
   }
 
   return { exportPath, top, filterStopWords, languages, outputFile };
@@ -171,19 +167,7 @@ const runWords = async (args: string[]) => {
 };
 
 const runPredictionCmd = async (args: string[]) => {
-  for (const arg of args) {
-    if (arg === "--help" || arg === "-h") {
-      console.log(PREDICTION_HELP);
-      process.exit(0);
-    }
-  }
-
-  const exportPath = args.find((a) => !a.startsWith("-"));
-  if (!exportPath) {
-    console.error("Error: path-to-export is required\n");
-    console.error(PREDICTION_HELP);
-    process.exit(1);
-  }
+  const exportPath = requireExportPath(args, PREDICTION_HELP);
 
   const prog = createProgress();
   const result = await runPrediction(exportPath, prog);
@@ -217,8 +201,7 @@ const main = async () => {
   }
 
   if (cmd === "--help" || cmd === "-h") {
-    console.log(HELP);
-    process.exit(0);
+    showHelp(HELP);
   }
 
   if (cmd === "--version" || cmd === "-V") {
@@ -236,9 +219,7 @@ const main = async () => {
     return;
   }
 
-  console.error(`Unknown command: ${cmd}\n`);
-  console.error(HELP);
-  process.exit(1);
+  exitError(`Unknown command: ${cmd}\n`, HELP);
 };
 
 main().catch((err: unknown) => {

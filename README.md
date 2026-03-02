@@ -184,6 +184,7 @@ The resulting binaries are fully standalone.
 ```
 src/
   index.ts        CLI entry point, argument parsing, and command dispatch
+  cmd.ts          Shared CLI utilities
   extractor.ts    ZIP detection and extraction to temp dir
   parser.ts       Walk export directory, stream messages.csv files
   tokenizer.ts    Strip noise, split into word tokens
