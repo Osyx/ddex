@@ -3,6 +3,7 @@
   "packages": {
     ".": {
       "release-type": "node",
+      "pull-request-header": "New release for discord-mcd! 🚀",
       "include-v-in-tag": true,
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
