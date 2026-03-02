@@ -8,7 +8,7 @@ body:
     attributes:
       label: What problem does this solve?
       description: Describe the problem or limitation you are running into. A clear problem statement helps evaluate the request.
-      placeholder: "When I run ddex with a large export, I can't easily..."
+      placeholder: "When I run ddex words with a large export, I can't easily..."
     validations:
       required: true
 

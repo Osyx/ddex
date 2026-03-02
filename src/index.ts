@@ -10,7 +10,22 @@ import { createProgress } from "./progress.js";
 import { version } from "../package.json";
 
 const HELP = `
-Usage: ddex <path-to-export> [options]
+Usage: ddex <command> [options]
+
+Commands:
+  words   Analyse your most-used words in a Discord export
+
+Options:
+  --version, -V   Print version and exit
+  --help, -h      Show this help message
+`.trim();
+
+const WORDS_HELP = `
+Usage: ddex words <path-to-export> [options]
+
+Arguments:
+  path-to-export          Path to your Discord data package.
+                          Accepts a directory (unzipped export) or a .zip file.
 
 Options:
   --top <n>               Show top N word groups (default: 10)
@@ -18,12 +33,10 @@ Options:
   --language <codes>      Comma-separated stop-word language codes (default: eng)
                           Supported: ${SUPPORTED_LANGUAGES.join(", ")}
   --output <file>         Also write results to a file (JSON or plain text based on extension)
-  --version, -V           Print version and exit
-  --help                  Show this help message
+  --help, -h              Show this help message
 `.trim();
 
-const parseArgs = (argv: string[]) => {
-  const args = argv.slice(2); // strip bun / node + script
+const parseWordsArgs = (args: string[]) => {
   let exportPath: string | undefined;
   let top = 10;
   let filterStopWords = true;
@@ -34,10 +47,7 @@ const parseArgs = (argv: string[]) => {
     const arg = args[i];
     if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
-      console.log(HELP);
-      process.exit(0);
-    } else if (arg === "--version" || arg === "-V") {
-      console.log(version);
+      console.log(WORDS_HELP);
       process.exit(0);
     } else if (arg === "--top") {
       const val = args[++i];
@@ -69,7 +79,7 @@ const parseArgs = (argv: string[]) => {
       exportPath = arg;
     } else {
       console.error(`Unknown option: ${arg}`);
-      console.error(HELP);
+      console.error(WORDS_HELP);
       process.exit(1);
     }
   }
@@ -85,15 +95,15 @@ const parseArgs = (argv: string[]) => {
 
   if (!exportPath) {
     console.error("Error: path-to-export is required\n");
-    console.error(HELP);
+    console.error(WORDS_HELP);
     process.exit(1);
   }
 
   return { exportPath, top, filterStopWords, languages, outputFile };
 };
 
-const main = async () => {
-  const { exportPath, top, filterStopWords, languages, outputFile } = parseArgs(process.argv);
+const runWords = async (args: string[]) => {
+  const { exportPath, top, filterStopWords, languages, outputFile } = parseWordsArgs(args);
   const prog = createProgress();
   const stopWords = filterStopWords ? buildStopWordSet(languages) : new Set<string>();
 
@@ -145,6 +155,35 @@ const main = async () => {
     db.close();
     await handleExit();
   }
+};
+
+const main = async () => {
+  const args = process.argv.slice(2);
+  const cmd = args[0];
+
+  if (!cmd) {
+    console.error(HELP);
+    process.exit(1);
+  }
+
+  if (cmd === "--help" || cmd === "-h") {
+    console.log(HELP);
+    process.exit(0);
+  }
+
+  if (cmd === "--version" || cmd === "-V") {
+    console.log(version);
+    process.exit(0);
+  }
+
+  if (cmd === "words") {
+    await runWords(args.slice(1));
+    return;
+  }
+
+  console.error(`Unknown command: ${cmd}\n`);
+  console.error(HELP);
+  process.exit(1);
 };
 
 main().catch((err: unknown) => {

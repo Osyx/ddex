@@ -26,7 +26,7 @@ body:
       label: Steps to reproduce
       description: Tell us exactly how to trigger the bug.
       placeholder: |
-        1. Run `ddex ~/Downloads/package.zip --top 20`
+        1. Run `ddex words ~/Downloads/package.zip --top 20`
         2. ...
     validations:
       required: true

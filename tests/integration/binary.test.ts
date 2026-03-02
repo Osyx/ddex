@@ -33,13 +33,13 @@ beforeAll(() => {
 
 describe("binary smoke tests", () => {
   test("exits 0 and produces output for valid export directory", () => {
-    const result = run([FIXTURE]);
+    const result = run(["words", FIXTURE]);
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("programming");
   });
 
   test("top word is 'programming' (appears most in fixture)", () => {
-    const result = run([FIXTURE]);
+    const result = run(["words", FIXTURE]);
     expect(result.status).toBe(0);
     // First ranked word should be programming (6 occurrences)
     const lines = result.stdout.split("\n").filter((l) => /^\s*\d+\./.test(l));
@@ -47,14 +47,14 @@ describe("binary smoke tests", () => {
   });
 
   test("--top limits number of results", () => {
-    const result = run([FIXTURE, "--top", "2"]);
+    const result = run(["words", FIXTURE, "--top", "2"]);
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Top 2");
   });
 
   test("--include-stop-words includes common words like 'is'", () => {
-    const withStopWords = run([FIXTURE, "--include-stop-words", "--top", "20"]);
-    const withoutStopWords = run([FIXTURE]);
+    const withStopWords = run(["words", FIXTURE, "--include-stop-words", "--top", "20"]);
+    const withoutStopWords = run(["words", FIXTURE]);
     expect(withStopWords.status).toBe(0);
     // "is" appears 3x in fixture - should appear with stop words included
     expect(withStopWords.stdout).toContain("is");
@@ -66,7 +66,7 @@ describe("binary smoke tests", () => {
   test("--output writes a text file", async () => {
     const outPath = join(tmpdir(), `ddex-test-${Date.now()}.txt`);
     try {
-      const result = run([FIXTURE, "--output", outPath]);
+      const result = run(["words", FIXTURE, "--output", outPath]);
       expect(result.status).toBe(0);
       expect(existsSync(outPath)).toBe(true);
       const content = await Bun.file(outPath).text();
@@ -79,7 +79,7 @@ describe("binary smoke tests", () => {
   test("--output writes a JSON file", async () => {
     const outPath = join(tmpdir(), `ddex-test-${Date.now()}.json`);
     try {
-      const result = run([FIXTURE, "--output", outPath]);
+      const result = run(["words", FIXTURE, "--output", outPath]);
       expect(result.status).toBe(0);
       expect(existsSync(outPath)).toBe(true);
       const json = JSON.parse(await Bun.file(outPath).text());
@@ -97,18 +97,23 @@ describe("binary smoke tests", () => {
     expect(result.stdout).toContain("Usage");
   });
 
-  test("exits non-zero when no path is provided", () => {
+  test("exits non-zero when no command is provided", () => {
     const result = run([]);
     expect(result.status).not.toBe(0);
   });
 
-  test("exits non-zero for unknown flag", () => {
-    const result = run(["--unknown-flag"]);
+  test("exits non-zero for unknown command", () => {
+    const result = run(["unknown-command"]);
+    expect(result.status).not.toBe(0);
+  });
+
+  test("exits non-zero when no path is provided to words", () => {
+    const result = run(["words"]);
     expect(result.status).not.toBe(0);
   });
 
   test("handles Swedish characters and real-world Discord format", () => {
-    const result = run([FIXTURE, "--language", "swe,eng", "--top", "20"]);
+    const result = run(["words", FIXTURE, "--language", "swe,eng", "--top", "20"]);
     expect(result.status).toBe(0);
     // Swedish words from the fixture should appear
     expect(result.stdout).toContain("nyår");
@@ -139,7 +144,7 @@ describe("binary smoke tests", () => {
       const buf = await zip.generateAsync({ type: "nodebuffer" });
       require("fs").writeFileSync(zipPath, buf);
 
-      const result = run([zipPath]);
+      const result = run(["words", zipPath]);
       expect(result.status).toBe(0);
       expect(result.stdout).toContain("programming");
     } finally {

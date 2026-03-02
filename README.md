@@ -37,11 +37,24 @@ chmod +x ddex-*
 ## Usage
 
 ```
-ddex <path-to-export> [options]
+ddex <command> [options]
+
+Commands:
+  words   Analyse your most-used words in a Discord export
+
+Options:
+  --version, -V   Print version and exit
+  --help, -h      Show this help message
+```
+
+### `ddex words`
+
+```
+ddex words <path-to-export> [options]
 
 Arguments:
-  path-to-export      Path to your Discord data package.
-                      Accepts a directory (unzipped export) or a .zip file.
+  path-to-export          Path to your Discord data package.
+                          Accepts a directory (unzipped export) or a .zip file.
 
 Options:
   --top <n>               Show top N word groups (default: 10)
@@ -49,26 +62,26 @@ Options:
   --language <codes>      Comma-separated stop-word language codes (default: eng)
                           Supports 62 languages, e.g. eng, swe, deu, fra
   --output <file>         Write results to a file (.json for JSON, anything else for plain text)
-  --help                  Show this help message
+  --help, -h              Show this help message
 ```
 
 ### Examples
 
 ```sh
 # Show top 20 words
-ddex ~/Downloads/package.zip --top 20
+ddex words ~/Downloads/package.zip --top 20
 
 # Pass an already-unzipped export directory
-ddex ~/Downloads/package/ --top 20
+ddex words ~/Downloads/package/ --top 20
 
 # Save results to a JSON file
-ddex ~/Downloads/package.zip --output results.json
+ddex words ~/Downloads/package.zip --output results.json
 
 # Filter stop words for both English and Swedish
-ddex ~/Downloads/package.zip --language eng,swe
+ddex words ~/Downloads/package.zip --language eng,swe
 
 # Include stop words (the, a, is, …) in the results
-ddex ~/Downloads/package.zip --include-stop-words
+ddex words ~/Downloads/package.zip --include-stop-words
 ```
 
 ---
