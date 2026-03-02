@@ -21,7 +21,7 @@ export function parseEmojisFromText(text: string): string[] {
   return results;
 }
 
-class EmojiMessageAnalyzer implements MessageAnalyzer {
+export class EmojiMessageAnalyzer implements MessageAnalyzer {
   readonly counts = new Map<string, number>();
 
   onMessage(row: MessageRow): void {
@@ -31,7 +31,7 @@ class EmojiMessageAnalyzer implements MessageAnalyzer {
   }
 }
 
-class ReactionCollector implements AnalyticsCollector {
+export class ReactionCollector implements AnalyticsCollector {
   readonly eventTypes = new Set(["add_reaction"]);
   readonly counts = new Map<string, number>();
   readonly isCustom = new Map<string, boolean>();

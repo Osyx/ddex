@@ -23,7 +23,7 @@ interface ChannelAttachmentStats {
   totalAttachments: number;
 }
 
-class AttachmentsAnalyzer implements MessageAnalyzer {
+export class AttachmentsAnalyzer implements MessageAnalyzer {
   messagesWithAttachments = 0;
   totalAttachments = 0;
   readonly channelStats = new Map<string, ChannelAttachmentStats>();
