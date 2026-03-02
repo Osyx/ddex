@@ -12,13 +12,13 @@ const phoneticKey = (word: string): string => {
 
 /**
  * Max edit distance allowed for two words to be considered variants.
- * Uses the shorter word's normalised length so short words (≤ 3 chars) are
- * never fuzzily merged, preventing cross-language false positives like
- * `typ`/`top` or `lol`/`loli`.
+ * Uses the longer normalised form so that elongations like "loool" (→ "lool")
+ * can still match "lol", and short-word pairs like "lol"/"lul" are allowed
+ * one edit. Only 1-2 char words are held to zero (too short to fuzz safely).
  */
-const editThreshold = (minNormLen: number): number => {
-  if (minNormLen <= 3) return 0;
-  if (minNormLen <= 6) return 1;
+const editThreshold = (maxNormLen: number): number => {
+  if (maxNormLen <= 2) return 0;
+  if (maxNormLen <= 6) return 1;
   return 2;
 };
 
@@ -39,23 +39,6 @@ export const cluster = (counts: Map<string, number>): WordGroup[] => {
   const groups: WordGroup[] = [];
 
   for (const variants of buckets.values()) {
-    // Re-sort: frequency descending (primary) then normalised form (secondary)
-    // so the most-frequent word still wins the canonical slot while similar-
-    // looking words are adjacent, meaning the scan over group representatives
-    // terminates quickly.
-    variants.sort(
-      (a, b) =>
-        b.count - a.count || normalizeRepeats(a.word).localeCompare(normalizeRepeats(b.word)),
-    );
-
-    // Guard: skip edit-distance merging for degenerate buckets to cap O(n²).
-    if (variants.length > 50) {
-      for (const variant of variants) {
-        groups.push({ canonical: variant.word, total: variant.count, variants: [variant] });
-      }
-      continue;
-    }
-
     // Within a phonetic bucket, further merge by edit distance
     const merged: VariantCount[][] = [];
 
@@ -67,8 +50,8 @@ export const cluster = (counts: Map<string, number>): WordGroup[] => {
         if (representative === undefined) continue;
         const normVariant = normalizeRepeats(variant.word);
         const normRep = normalizeRepeats(representative);
-        const minLen = Math.min(normVariant.length, normRep.length);
-        const threshold = editThreshold(minLen);
+        const maxLen = Math.max(normVariant.length, normRep.length);
+        const threshold = editThreshold(maxLen);
         if (levenshtein(normVariant, normRep) <= threshold) {
           group.push(variant);
           placed = true;

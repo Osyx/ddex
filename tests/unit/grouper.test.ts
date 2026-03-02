@@ -77,18 +77,38 @@ describe("cluster", () => {
     expect(combined?.canonical).toBe("colour");
   });
 
-  test("does not merge short words (<=3 chars) with edit distance 1", () => {
-    // typ / top share phonetic key TP but are different words — should stay separate
+  test("does not merge very short words (<=2 chars) with edit distance 1", () => {
+    // "hi" and "ha" share phonetic key H but are too short to fuzz
     const counts = new Map([
-      ["typ", 5],
-      ["top", 3],
+      ["hi", 5],
+      ["ha", 3],
     ]);
     const groups = cluster(counts);
     expect(groups).toHaveLength(2);
   });
 
+  test("merges 3-char phonetic variants like lol/lul", () => {
+    const counts = new Map([
+      ["lol", 10],
+      ["lul", 3],
+    ]);
+    const groups = cluster(counts);
+    const combined = groups.find((g) => g.variants.some((v) => v.word === "lol"));
+    expect(combined?.variants.some((v) => v.word === "lul")).toBe(true);
+  });
+
+  test("merges yeah/yea (one is prefix of the other)", () => {
+    const counts = new Map([
+      ["yeah", 10],
+      ["yea", 6],
+    ]);
+    const groups = cluster(counts);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.canonical).toBe("yeah");
+  });
+
   test("does not merge across large length differences", () => {
-    // tror / terror share phonetic key TRR but edit distance 2 exceeds threshold for minLen 4
+    // tror / terror share phonetic key TRR but edit distance 2 exceeds threshold for maxLen 6
     const counts = new Map([
       ["tror", 10],
       ["terror", 5],
