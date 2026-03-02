@@ -7,6 +7,13 @@ import { formatConsole, writeOutput } from "./formatter.js";
 import { createWordDb } from "./db.js";
 import { resolveExport } from "./extractor.js";
 import { runPrediction } from "./predictor.js";
+import { runSpent } from "./spent.js";
+import { runPeople } from "./people.js";
+import { runServers } from "./servers.js";
+import { runTime } from "./time.js";
+import { runEmojis } from "./emojis.js";
+import { runAttachments } from "./attachments.js";
+import { runStats } from "./stats.js";
 import { createProgress } from "./progress.js";
 import { showHelp, exitError, requireExportPath } from "./cmd.js";
 import { version } from "../package.json";
@@ -15,8 +22,15 @@ const HELP = `
 Usage: ddex <command> [options]
 
 Commands:
-  words       Analyse your most-used words in a Discord export
-  prediction  Show Discord's predicted age group and gender for your account
+  words        Analyse your most-used words in a Discord export
+  prediction   Show Discord's predicted age group and gender
+  spent        Show how much you have spent on Discord
+  people       Show your social graph and DM statistics
+  servers      Show your server and channel activity
+  time         Show your temporal activity patterns
+  emojis       Show your emoji usage and reactions
+  attachments  Show your attachment activity
+  stats        Show a full summary dashboard of your Discord activity
 
 Options:
   --version, -V   Print version and exit
@@ -41,6 +55,83 @@ Options:
 
 const PREDICTION_HELP = `
 Usage: ddex prediction <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+`.trim();
+
+const SPENT_HELP = `
+Usage: ddex spent <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+`.trim();
+
+const PEOPLE_HELP = `
+Usage: ddex people <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+`.trim();
+
+const SERVERS_HELP = `
+Usage: ddex servers <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+`.trim();
+
+const TIME_HELP = `
+Usage: ddex time <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+`.trim();
+
+const EMOJIS_HELP = `
+Usage: ddex emojis <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+`.trim();
+
+const ATTACHMENTS_HELP = `
+Usage: ddex attachments <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+`.trim();
+
+const STATS_HELP = `
+Usage: ddex stats <path-to-export>
 
 Arguments:
   path-to-export   Path to your Discord data package.
@@ -216,6 +307,55 @@ const main = async () => {
 
   if (cmd === "prediction") {
     await runPredictionCmd(args.slice(1));
+    return;
+  }
+
+  if (cmd === "spent") {
+    const exportPath = requireExportPath(args.slice(1), SPENT_HELP);
+    const prog = createProgress();
+    await runSpent(exportPath, prog);
+    return;
+  }
+
+  if (cmd === "people") {
+    const exportPath = requireExportPath(args.slice(1), PEOPLE_HELP);
+    const prog = createProgress();
+    await runPeople(exportPath, prog);
+    return;
+  }
+
+  if (cmd === "servers") {
+    const exportPath = requireExportPath(args.slice(1), SERVERS_HELP);
+    const prog = createProgress();
+    await runServers(exportPath, prog);
+    return;
+  }
+
+  if (cmd === "time") {
+    const exportPath = requireExportPath(args.slice(1), TIME_HELP);
+    const prog = createProgress();
+    await runTime(exportPath, prog);
+    return;
+  }
+
+  if (cmd === "emojis") {
+    const exportPath = requireExportPath(args.slice(1), EMOJIS_HELP);
+    const prog = createProgress();
+    await runEmojis(exportPath, prog);
+    return;
+  }
+
+  if (cmd === "attachments") {
+    const exportPath = requireExportPath(args.slice(1), ATTACHMENTS_HELP);
+    const prog = createProgress();
+    await runAttachments(exportPath, prog);
+    return;
+  }
+
+  if (cmd === "stats") {
+    const exportPath = requireExportPath(args.slice(1), STATS_HELP);
+    const prog = createProgress();
+    await runStats(exportPath, prog);
     return;
   }
 

@@ -40,8 +40,15 @@ chmod +x ddex-*
 ddex <command> [options]
 
 Commands:
-  words       Analyse your most-used words in a Discord export
-  prediction  Show Discord's predicted age group and gender for your account
+  words        Analyse your most-used words in a Discord export
+  prediction   Show Discord's predicted age group and gender
+  spent        Show how much you have spent on Discord
+  people       Show your social graph and DM statistics
+  servers      Show your server and channel activity
+  time         Show your temporal activity patterns
+  emojis       Show your emoji usage and reactions
+  attachments  Show your attachment activity
+  stats        Show a full summary dashboard of your Discord activity
 
 Options:
   --version, -V   Print version and exit
@@ -112,6 +119,62 @@ Example usage:
 ```sh
 ddex prediction ~/Downloads/package.zip
 ddex prediction ~/Downloads/package/
+```
+
+### `ddex spent`
+
+Show how much you have spent on Discord (Nitro, gifts, store purchases).
+
+```sh
+ddex spent ~/Downloads/package.zip
+```
+
+### `ddex people`
+
+Show your social graph: friend count, DM partner count, top DM contacts, and voice call statistics.
+
+```sh
+ddex people ~/Downloads/package.zip
+```
+
+### `ddex servers`
+
+Show server and channel activity: top servers and text channels by message count, top voice channels by time.
+
+```sh
+ddex servers ~/Downloads/package.zip
+```
+
+### `ddex time`
+
+Show temporal activity patterns: message heatmap by day/hour, monthly activity, session stats and OS breakdown.
+
+```sh
+ddex time ~/Downloads/package.zip
+```
+
+### `ddex emojis`
+
+Show your most-used emojis in messages and reactions given (from analytics).
+
+```sh
+ddex emojis ~/Downloads/package.zip
+```
+
+### `ddex attachments`
+
+Show attachment activity: total attachments sent and top channels by attachment count.
+
+```sh
+ddex attachments ~/Downloads/package.zip
+```
+
+### `ddex stats`
+
+Show a full summary dashboard aggregating highlights from all other commands in a single pass.
+
+```sh
+ddex stats ~/Downloads/package.zip
 ```
 
 ---
@@ -194,6 +257,16 @@ src/
   formatter.ts    Console and file output formatting
   progress.ts     TTY-aware progress reporter (writes to stderr)
   predictor.ts    Locate and stream the analytics events file; extract demographic predictions
+  analyze.ts      Single-pass multi-analyzer engine for message files
+  analytics.ts    Analytics JSONL streaming and collector dispatch
+  metadata.ts     Load user.json, channel.json, and index files
+  spent.ts        Discord spending summary from payment records
+  people.ts       Social graph and DM partner statistics
+  servers.ts      Server and channel activity statistics
+  time.ts         Temporal activity patterns (heatmap, session stats)
+  emojis.ts       Emoji usage in messages and reactions from analytics
+  attachments.ts  Attachment activity per channel
+  stats.ts        Single-pass summary dashboard aggregating all analyzers
   types.ts        Shared TypeScript interfaces
 ```
 

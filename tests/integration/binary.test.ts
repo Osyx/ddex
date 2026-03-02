@@ -13,6 +13,9 @@ import { platform } from "os";
 
 const FIXTURE = join(import.meta.dirname, "../fixtures/export");
 const ANALYTICS_FIXTURE = join(import.meta.dirname, "../fixtures/analytics");
+const PEOPLE_FIXTURE = join(import.meta.dirname, "../fixtures/people-export");
+const SERVERS_FIXTURE = join(import.meta.dirname, "../fixtures/servers-export");
+const SPENT_FIXTURE = join(import.meta.dirname, "../fixtures/spent-export");
 const BINARY = platform() === "win32" ? "./ddex.exe" : "./ddex";
 
 const run = (args: string[]): { stdout: string; stderr: string; status: number } => {
@@ -171,6 +174,153 @@ describe("prediction command", () => {
 
   test("exits non-zero when no path is provided", () => {
     const result = run(["prediction"]);
+    expect(result.status).not.toBe(0);
+  });
+});
+
+describe("spent command", () => {
+  test("exits 0 and produces output for valid export", () => {
+    const result = run(["spent", SPENT_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Discord Spending Summary");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["spent", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["spent"]);
+    expect(result.status).not.toBe(0);
+  });
+});
+
+describe("people command", () => {
+  test("exits 0 and produces output for valid export", () => {
+    const result = run(["people", PEOPLE_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Social Graph");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["people", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["people"]);
+    expect(result.status).not.toBe(0);
+  });
+});
+
+describe("servers command", () => {
+  test("exits 0 and produces output for valid export", () => {
+    const result = run(["servers", SERVERS_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Server Activity");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["servers", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["servers"]);
+    expect(result.status).not.toBe(0);
+  });
+});
+
+describe("time command", () => {
+  test("exits 0 and produces output for valid export", () => {
+    const result = run(["time", SERVERS_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Temporal Activity");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["time", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["time"]);
+    expect(result.status).not.toBe(0);
+  });
+});
+
+describe("emojis command", () => {
+  test("exits 0 and produces output for valid export", () => {
+    const result = run(["emojis", FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Emoji Usage");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["emojis", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["emojis"]);
+    expect(result.status).not.toBe(0);
+  });
+});
+
+describe("attachments command", () => {
+  test("exits 0 and produces output for valid export", () => {
+    const result = run(["attachments", FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Attachment Activity");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["attachments", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["attachments"]);
+    expect(result.status).not.toBe(0);
+  });
+});
+
+describe("stats command", () => {
+  test("exits 0 and produces summary output for valid export", () => {
+    const result = run(["stats", SERVERS_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Discord Data Explorer");
+    expect(result.stdout).toContain("Messages sent:");
+  });
+
+  test("shows server and channel highlights", () => {
+    const result = run(["stats", SERVERS_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Most active server:");
+    expect(result.stdout).toContain("Servers active in:");
+  });
+
+  test("shows activity over time section", () => {
+    const result = run(["stats", SERVERS_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Activity over time");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["stats", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["stats"]);
     expect(result.status).not.toBe(0);
   });
 });

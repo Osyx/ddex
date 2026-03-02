@@ -56,14 +56,27 @@ src/
   formatter.ts    Console and file output formatting
   progress.ts     TTY-aware progress reporter (writes to stderr)
   predictor.ts    Locate + stream the analytics JSONL file; extract demographic predictions
+  analyze.ts      Single-pass multi-analyzer engine for message files
+  analytics.ts    Analytics JSONL streaming and collector dispatch
+  metadata.ts     Load user.json, channel.json, and index files
+  spent.ts        Discord spending summary from payment records
+  people.ts       Social graph and DM partner statistics
+  servers.ts      Server and channel activity statistics
+  time.ts         Temporal activity patterns (heatmap, session stats)
+  emojis.ts       Emoji usage in messages and reactions from analytics
+  attachments.ts  Attachment activity per channel
+  stats.ts        Single-pass summary dashboard aggregating all analyzers
   types.ts        Shared TypeScript interfaces
 
 tests/
   unit/           One test file per source module
   integration/    binary.test.ts — builds the binary and tests it end-to-end
   fixtures/
-    export/       Minimal Discord export directory for words/integration tests
-    analytics/    Minimal analytics JSONL fixture for prediction tests
+    export/           Minimal Discord export directory for words/integration tests
+    analytics/        Minimal analytics JSONL fixture for prediction tests
+    people-export/    Fixture with DM channels and analytics for people tests
+    servers-export/   Fixture with server channels and analytics for servers/time/stats tests
+    spent-export/     Fixture with user.json payment records for spent tests
 ```
 
 ---
@@ -247,17 +260,16 @@ Servers/
 
 ---
 
-## Planned subcommands (see PLAN.md)
-
-The following subcommands are planned but not yet implemented. PLAN.md has full specs.
+## Implemented subcommands
 
 | Command | Summary |
 |---------|---------|
+| `ddex words` | Most-used words with fuzzy clustering and stop-word filtering |
+| `ddex prediction` | Discord's predicted demographic (age group, gender) from analytics |
 | `ddex people` | Social graph: friends, DM partners, top DM contacts, voice call hours |
 | `ddex spent` | Money spent on Discord (from `payments[]`) |
 | `ddex servers` | Top servers and channels by message count; voice channel time |
 | `ddex time` | Message heatmap, notification clicks, session stats, OS breakdown |
 | `ddex emojis` | Top emojis in messages + reactions given |
-| `ddex attachments` | Attachment counts per channel (format TBD — field unconfirmed) |
+| `ddex attachments` | Attachment counts per channel |
 | `ddex stats` | Single-pass summary dashboard across all the above |
-| `ddex enrich` | Online enrichment: resolve user IDs via Discord bot token; cache CDN images |
