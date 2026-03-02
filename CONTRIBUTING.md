@@ -33,8 +33,6 @@ bun install
 Run the CLI directly without compiling:
 
 ```sh
-bun run dev
-# or equivalently
 bun run src/index.ts
 ```
 
@@ -46,15 +44,21 @@ Unit tests:
 bun run test
 ```
 
-Binary integration tests (builds the binary first, then runs end-to-end tests):
+Integration tests (builds the binary first, then runs end-to-end tests):
 
 ```sh
-bun run test:binary
+bun run test:integration
+```
+
+Or run everything at once (format check, lint, unit tests, integration tests):
+
+```sh
+bun run ci
 ```
 
 ## Linting and formatting
 
-Lint with [oxlint](https://oxlint.rs):
+Lint + type-check with [oxlint](https://oxlint.rs):
 
 ```sh
 bun run check
@@ -64,18 +68,6 @@ Format source files with [oxfmt](https://github.com/nicolo-ribaudo/oxfmt):
 
 ```sh
 bun run format
-```
-
-Check formatting without writing changes:
-
-```sh
-bun run format:check
-```
-
-## Type checking
-
-```sh
-bun run typecheck
 ```
 
 ## Commit message format
@@ -125,7 +117,7 @@ git checkout -b feat/my-new-feature
 3. Ensure all CI checks pass locally before opening a PR:
 
 ```sh
-bun run check && bun run typecheck && bun run test
+bun run ci
 ```
 
 4. Open a pull request against `main`. Fill in the PR template.

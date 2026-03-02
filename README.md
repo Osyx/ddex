@@ -112,6 +112,12 @@ The resulting binaries are fully standalone.
 
 | Script                      | Description                                     |
 | --------------------------- | ----------------------------------------------- |
+| `bun run ci`                | Run all checks and tests (format, lint, unit, integration) |
+| `bun run test`              | Run unit tests                                  |
+| `bun run test:integration`  | Build binary and run integration tests          |
+| `bun run check`             | Lint + type-check with oxlint                   |
+| `bun run format`            | Format source files with oxfmt                  |
+| `bun run format:check`      | Check formatting without writing changes        |
 | `bun run build`             | Compile a binary for the current platform       |
 | `bun run build:linux-x64`   | Cross-compile for Linux x64 → `dist/`           |
 | `bun run build:linux-arm64` | Cross-compile for Linux ARM64 → `dist/`         |
@@ -119,14 +125,6 @@ The resulting binaries are fully standalone.
 | `bun run build:macos-arm64` | Cross-compile for macOS Apple Silicon → `dist/` |
 | `bun run build:windows-x64` | Cross-compile for Windows x64 → `dist/`         |
 | `bun run build:all`         | Build for all platforms → `dist/`               |
-| `bun run start`             | Run the CLI directly with Bun (no compile step) |
-| `bun run typecheck`         | Check TypeScript types                          |
-| `bun test`                  | Run all unit tests                              |
-| `bun run test:binary`       | Build binary and run integration tests          |
-| `bun run lint`              | Lint with oxlint                                |
-| `bun run check`             | Lint + type-check with oxlint                   |
-| `bun run format`            | Format source files with oxfmt                  |
-| `bun run format:check`      | Check formatting without writing changes        |
 
 ### How it works
 
