@@ -1,11 +1,12 @@
 import { createWriteStream, mkdirSync } from "fs";
 import { rm, stat } from "fs/promises";
+import { randomUUID } from "crypto";
 import { tmpdir } from "os";
-import { dirname, join } from "path";
+import { dirname, join, resolve as resolvePath, sep } from "path";
 import yauzl from "yauzl";
 import type { Progress } from "./progress.js";
 
-const isMessageFile = (entryName: string): boolean => {
+const isMessageEntryPath = (entryName: string): boolean => {
   const lower = entryName.toLowerCase();
   return lower.endsWith("/messages.csv") || lower.endsWith("/messages.json");
 };
@@ -24,7 +25,7 @@ const extractMessageFiles = (zipPath: string, destDir: string, prog: Progress): 
         i++;
         const isDir = entry.fileName.endsWith("/");
 
-        if (isDir || !isMessageFile(entry.fileName)) {
+        if (isDir || !isMessageEntryPath(entry.fileName)) {
           zipfile.readEntry();
           return;
         }
@@ -35,7 +36,12 @@ const extractMessageFiles = (zipPath: string, destDir: string, prog: Progress): 
           if (streamErr || !readStream)
             return reject(streamErr ?? new Error("Failed to open entry stream"));
 
+          const resolvedDest = resolvePath(destDir);
           const destPath = join(destDir, entry.fileName);
+          if (!resolvePath(destPath).startsWith(resolvedDest + sep)) {
+            zipfile.readEntry(); // skip malicious entry silently
+            return;
+          }
           mkdirSync(dirname(destPath), { recursive: true });
 
           const writeStream = createWriteStream(destPath);
@@ -70,7 +76,7 @@ export const resolveExport = async (
     throw new Error(`Input must be a directory or a .zip file, got: ${input}`);
   }
 
-  const tempDir = join(tmpdir(), `discord-mcd-${Math.random().toString(36).slice(2)}`);
+  const tempDir = join(tmpdir(), `discord-mcd-${randomUUID()}`);
   prog.phase("Extracting ZIP");
 
   await extractMessageFiles(input, tempDir, prog);

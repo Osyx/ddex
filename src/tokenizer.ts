@@ -7,7 +7,7 @@ const URL_PATTERN = /https?:\/\/\S+/g;
 // Matches emoji shortcodes like :smile:
 const EMOJI_SHORTCODE = /:[a-zA-Z0-9_+-]+:/g;
 // Matches unicode emoji (basic range)
-const UNICODE_EMOJI = /\p{Emoji}/gu;
+const UNICODE_EMOJI = /\p{Extended_Pictographic}/gu;
 
 export const tokenize = (content: string): string[] => {
   const text = content
@@ -23,12 +23,8 @@ export const tokenize = (content: string): string[] => {
   // Split on anything that's not a Unicode letter or apostrophe
   const tokens = text.split(/[^\p{L}']+/u);
 
-  return tokens
-    .filter((t) => {
-      // Remove surrounding apostrophes (contractions OK in middle)
-      const word = t.replace(/^'+|'+$/g, "");
-      // Discard short tokens, pure numbers, and empty strings
-      return word.length >= 2 && !/^\d+$/.test(word);
-    })
-    .map((t) => t.replace(/^'+|'+$/g, ""));
+  return tokens.flatMap((t) => {
+    const word = t.replace(/^'+|'+$/g, "");
+    return word.length >= 2 && !/^\d+$/.test(word) ? [word] : [];
+  });
 };

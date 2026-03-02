@@ -7,6 +7,7 @@ import { formatConsole, writeOutput } from "./formatter.js";
 import { createWordDb } from "./db.js";
 import { resolveExport } from "./extractor.js";
 import { createProgress } from "./progress.js";
+import { version } from "../package.json";
 
 const HELP = `
 Usage: discord-mcd <path-to-export> [options]
@@ -17,6 +18,7 @@ Options:
   --language <codes>      Comma-separated stop-word language codes (default: eng)
                           Supported: ${SUPPORTED_LANGUAGES.join(", ")}
   --output <file>         Also write results to a file (JSON or plain text based on extension)
+  --version, -V           Print version and exit
   --help                  Show this help message
 `.trim();
 
@@ -33,6 +35,9 @@ const parseArgs = (argv: string[]) => {
     if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
       console.log(HELP);
+      process.exit(0);
+    } else if (arg === "--version" || arg === "-V") {
+      console.log(version);
       process.exit(0);
     } else if (arg === "--top") {
       const val = args[++i];
@@ -69,6 +74,15 @@ const parseArgs = (argv: string[]) => {
     }
   }
 
+  for (const lang of languages) {
+    if (!SUPPORTED_LANGUAGES.includes(lang)) {
+      console.error(
+        `Unknown language code: "${lang}". Supported: ${SUPPORTED_LANGUAGES.join(", ")}`,
+      );
+      process.exit(1);
+    }
+  }
+
   if (!exportPath) {
     console.error("Error: path-to-export is required\n");
     console.error(HELP);
@@ -85,13 +99,16 @@ const main = async () => {
 
   const { exportDir, cleanup } = await resolveExport(exportPath, prog);
 
+  let cleaningUp = false;
   const handleExit = async () => {
+    if (cleaningUp) return;
+    cleaningUp = true;
     await cleanup();
   };
-  process.on("SIGINT", () => {
+  process.once("SIGINT", () => {
     void handleExit().then(() => process.exit(1));
   });
-  process.on("SIGTERM", () => {
+  process.once("SIGTERM", () => {
     void handleExit().then(() => process.exit(1));
   });
   process.on("uncaughtException", (err) => {
@@ -101,31 +118,33 @@ const main = async () => {
 
   const db = createWordDb(":memory:");
 
-  const totalMessages = await parseExport(
-    exportDir,
-    (content) => {
-      const tokens = tokenize(content);
-      const filtered = filterStopWords ? tokens.filter((t) => !isStopWord(t, stopWords)) : tokens;
-      db.addTokens(filtered);
-    },
-    prog,
-  );
+  try {
+    const totalMessages = await parseExport(
+      exportDir,
+      (content) => {
+        const tokens = tokenize(content);
+        const filtered = filterStopWords ? tokens.filter((t) => !isStopWord(t, stopWords)) : tokens;
+        db.addTokens(filtered);
+      },
+      prog,
+    );
 
-  prog.phase("Analysing patterns");
-  const counts = db.getWordCounts();
-  const groups = cluster(counts).slice(0, top);
-  prog.done("Analysis complete");
+    prog.phase("Analysing patterns");
+    const counts = db.getWordCounts();
+    const groups = cluster(counts).slice(0, top);
+    prog.done("Analysis complete");
 
-  const output = formatConsole(groups, totalMessages);
-  console.log(output);
+    const output = formatConsole(groups, totalMessages);
+    console.log(output);
 
-  if (outputFile) {
-    writeOutput(outputFile, groups, totalMessages);
-    console.log(`\nResults also written to: ${outputFile}`);
+    if (outputFile) {
+      writeOutput(outputFile, groups, totalMessages);
+      console.log(`\nResults also written to: ${outputFile}`);
+    }
+  } finally {
+    db.close();
+    await handleExit();
   }
-
-  db.close();
-  await cleanup();
 };
 
 main().catch((err: unknown) => {

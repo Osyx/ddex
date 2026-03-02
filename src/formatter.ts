@@ -1,4 +1,5 @@
-import { writeFileSync } from "fs";
+import { mkdirSync, writeFileSync } from "fs";
+import { dirname } from "path";
 import type { WordGroup } from "./types.js";
 
 const formatVariants = (variants: WordGroup["variants"]): string => {
@@ -22,6 +23,7 @@ export const formatConsole = (groups: WordGroup[], totalMessages: number): strin
 };
 
 export const writeOutput = (filePath: string, groups: WordGroup[], totalMessages: number): void => {
+  mkdirSync(dirname(filePath), { recursive: true });
   if (filePath.endsWith(".json")) {
     const data = { totalMessages, groups };
     writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
