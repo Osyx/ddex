@@ -1,0 +1,4 @@
+pre-commit:
+  commands:
+    format-check:
+      run: ./node_modules/.bin/oxfmt --check -c .oxfmtrc.json

@@ -1,0 +1,6 @@
+# Normalise all text files to LF on checkout
+* text=auto eol=lf
+
+# Treat binaries as binary (no line-ending conversion)
+*.exe binary
+dist/discord-mcd-* binary

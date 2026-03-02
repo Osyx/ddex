@@ -1,0 +1,9 @@
+node_modules
+
+out
+dist
+*.tgz
+*.tsbuildinfo
+.idea
+.DS_Store
+discord-mcd*

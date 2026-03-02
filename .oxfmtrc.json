@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "endOfLine": "lf",
+  "experimentalSortPackageJson": false,
+  "ignorePatterns": [
+    "**/*.json",
+    "**/*.md",
+    "**/*.yml",
+    "**/*.yaml",
+    "bun.lock"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "eslint.enable": false,
+  "prettier.enable": false,
+  "oxc.enable": true,
+  "oxc.typeAware": true,
+  "oxc.fmt.configPath": ".oxfmtrc.json",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.fixAll.oxc": "always"
+  },
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+  "files.encoding": "utf8"
+}
