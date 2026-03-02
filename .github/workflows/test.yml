@@ -2,6 +2,8 @@ name: Tests
 
 on:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -19,3 +21,9 @@ jobs:
 
       - name: Run tests
         run: bun test
+
+      - name: Lint
+        run: bun run check
+
+      - name: Type check
+        run: bun run typecheck

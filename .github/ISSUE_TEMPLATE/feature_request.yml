@@ -1,0 +1,33 @@
+name: Feature Request
+description: Suggest an idea or improvement for discord-mcd.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the problem or limitation you are running into. A clear problem statement helps evaluate the request.
+      placeholder: "When I run discord-mcd with a large export, I can't easily..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe what you would like to happen. Include any ideas about flags, output format, or behaviour changes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you thought of other ways to address this? Why do you prefer your proposed solution?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Any other information, screenshots, or examples that might help.

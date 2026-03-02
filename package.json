@@ -1,6 +1,29 @@
 {
   "name": "discord-mcd",
   "version": "0.0.2",
+  "description": "Offline CLI tool that analyses a Discord GDPR data export and reports your most-used words with fuzzy clustering",
+  "keywords": [
+    "discord",
+    "gdpr",
+    "export",
+    "word-frequency",
+    "cli",
+    "privacy",
+    "analysis"
+  ],
+  "author": "Osyx",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/Osyx/discord-mcd#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Osyx/discord-mcd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Osyx/discord-mcd/issues"
+  },
+  "engines": {
+    "bun": ">=1.3"
+  },
   "module": "src/index.ts",
   "dependencies": {
     "csv-parse": "^6.1.0",
@@ -19,7 +42,6 @@
     "oxlint-tsgolint": "^0.15.0",
     "typescript": "^5.9.3"
   },
-  "license": "GPL-3.0-only",
   "private": true,
   "scripts": {
     "build": "bun build --compile --minify src/index.ts --outfile discord-mcd",
