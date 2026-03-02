@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "path";
-import { parseExport } from "../parser.js";
-import { createProgress } from "../progress.js";
+import { parseExport } from "../../src/parser.js";
+import { createProgress } from "../../src/progress.js";
 
-const FIXTURES = join(import.meta.dir, "../../tests/fixtures");
+const FIXTURES = join(import.meta.dir, "../fixtures");
 
 const collect = async (dir: string): Promise<string[]> => {
   const contents: string[] = [];

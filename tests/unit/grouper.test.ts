@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { cluster } from "../grouper.js";
+import { cluster } from "../../src/grouper.js";
 
 describe("cluster", () => {
   test("returns empty array for empty map", () => {

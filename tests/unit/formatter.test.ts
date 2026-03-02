@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { formatConsole } from "../formatter.js";
-import type { WordGroup } from "../types.js";
+import { formatConsole } from "../../src/formatter.js";
+import type { WordGroup } from "../../src/types.js";
 
 const makeGroup = (
   canonical: string,

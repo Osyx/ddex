@@ -2,7 +2,7 @@
  * Binary integration test — builds the CLI binary for the current platform
  * and runs it against the test fixture to verify end-to-end behaviour.
  *
- * Run with: bun test src/__tests__/binary.test.ts
+ * Run with: bun test tests/binary.test.ts
  */
 import { beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, rmSync } from "fs";
@@ -11,7 +11,7 @@ import { join } from "path";
 import { spawnSync } from "child_process";
 import { platform } from "os";
 
-const FIXTURE = join(import.meta.dirname, "../../tests/fixtures/export");
+const FIXTURE = join(import.meta.dirname, "../fixtures/export");
 const BINARY = platform() === "win32" ? "./discord-mcd.exe" : "./discord-mcd";
 
 const run = (args: string[]): { stdout: string; stderr: string; status: number } => {

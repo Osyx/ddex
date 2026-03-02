@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { SUPPORTED_LANGUAGES, buildStopWordSet, isStopWord } from "../stopwords.js";
+import { SUPPORTED_LANGUAGES, buildStopWordSet, isStopWord } from "../../src/stopwords.js";
 
 describe("buildStopWordSet", () => {
   test("returns a Set for a known language", () => {

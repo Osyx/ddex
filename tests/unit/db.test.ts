@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { createWordDb } from "../db.js";
-import type { WordDb } from "../db.js";
+import { createWordDb } from "../../src/db.js";
+import type { WordDb } from "../../src/db.js";
 
 describe("createWordDb", () => {
   let db: WordDb;
