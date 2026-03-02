@@ -1,9 +1,11 @@
-import { readdirSync, createReadStream } from "fs";
+import { createReadStream } from "fs";
 import { stat } from "fs/promises";
-import { join } from "path";
 import { createInterface } from "readline";
 import yauzl from "yauzl";
 import type { Progress } from "./progress.js";
+import { findEventsFile } from "./analytics.js";
+
+export { findEventsFile };
 
 export interface Prediction {
   value: string;
@@ -36,38 +38,8 @@ export const findPrediction = (val: unknown, targetKey: string): Prediction | nu
   return null;
 };
 
-const EVENTS_FILE_RE = /^events-\d{4}-00000-of-00001\.json$/i;
-
 const isEventsEntry = (fileName: string): boolean =>
   /\/analytics\/events-\d{4}-00000-of-00001\.json$/i.test(fileName.replace(/\\/g, "/"));
-
-const findDirCaseInsensitive = (parent: string, name: string): string | undefined => {
-  try {
-    const entries = readdirSync(parent, { withFileTypes: true });
-    const match = entries.find(
-      (e) => e.isDirectory() && e.name.toLowerCase() === name.toLowerCase(),
-    );
-    return match ? join(parent, match.name) : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-export const findEventsFile = (exportDir: string): string | undefined => {
-  const pkg = findDirCaseInsensitive(exportDir, "package");
-  if (!pkg) return undefined;
-  const activity = findDirCaseInsensitive(pkg, "activity");
-  if (!activity) return undefined;
-  const analytics = findDirCaseInsensitive(activity, "analytics");
-  if (!analytics) return undefined;
-  try {
-    const entries = readdirSync(analytics);
-    const match = entries.find((e) => EVENTS_FILE_RE.test(e));
-    return match ? join(analytics, match) : undefined;
-  } catch {
-    return undefined;
-  }
-};
 
 const parseStream = async (
   stream: NodeJS.ReadableStream,

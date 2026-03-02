@@ -6,10 +6,7 @@ import { dirname, join, resolve as resolvePath, sep } from "path";
 import yauzl from "yauzl";
 import type { Progress } from "./progress.js";
 
-const isMessageEntryPath = (entryName: string): boolean =>
-  entryName.toLowerCase().endsWith("/messages.json");
-
-const extractMessageFiles = (zipPath: string, destDir: string, prog: Progress): Promise<void> =>
+const extractFiles = (zipPath: string, destDir: string, prog: Progress): Promise<void> =>
   new Promise((resolve, reject) => {
     yauzl.open(zipPath, { lazyEntries: true }, (openErr, zipfile) => {
       if (openErr || !zipfile) return reject(openErr ?? new Error("Failed to open ZIP"));
@@ -23,7 +20,7 @@ const extractMessageFiles = (zipPath: string, destDir: string, prog: Progress): 
         i++;
         const isDir = entry.fileName.endsWith("/");
 
-        if (isDir || !isMessageEntryPath(entry.fileName)) {
+        if (isDir) {
           zipfile.readEntry();
           return;
         }
@@ -77,7 +74,7 @@ export const resolveExport = async (
   const tempDir = join(tmpdir(), `ddex-${randomUUID()}`);
   prog.phase("Extracting ZIP");
 
-  await extractMessageFiles(input, tempDir, prog);
+  await extractFiles(input, tempDir, prog);
 
   prog.done("Extracted message files");
 
