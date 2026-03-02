@@ -1,6 +1,6 @@
 {
   "name": "discord-mcd",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Offline CLI tool that analyses a Discord GDPR data export and reports your most-used words with fuzzy clustering",
   "keywords": [
     "discord",
