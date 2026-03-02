@@ -1,7 +1,7 @@
 {
-  "name": "discord-mcd",
+  "name": "ddex",
   "version": "0.0.3",
-  "description": "Offline CLI tool that analyses a Discord GDPR data export and reports your most-used words with fuzzy clustering",
+  "description": "Discord Data Explorer (ddex) — offline CLI tool that analyses a Discord GDPR data export and reports your most-used words with fuzzy clustering",
   "keywords": [
     "discord",
     "gdpr",
@@ -13,13 +13,13 @@
   ],
   "author": "Osyx",
   "license": "GPL-3.0-only",
-  "homepage": "https://github.com/Osyx/discord-mcd#readme",
+  "homepage": "https://github.com/Osyx/ddex#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Osyx/discord-mcd.git"
+    "url": "https://github.com/Osyx/ddex.git"
   },
   "bugs": {
-    "url": "https://github.com/Osyx/discord-mcd/issues"
+    "url": "https://github.com/Osyx/ddex/issues"
   },
   "engines": {
     "bun": ">=1.3"
@@ -37,19 +37,19 @@
     "@types/stopword": "^2.0.3",
     "@types/yauzl": "^2.10.3",
     "jszip": "^3.10.1",
-    "oxfmt": "^0.35.0",
+    "oxfmt": "^0.36.0",
     "oxlint": "^1.50.0",
     "oxlint-tsgolint": "^0.15.0",
     "typescript": "^5.9.3"
   },
   "private": true,
   "scripts": {
-    "build": "bun build --compile --minify src/index.ts --outfile discord-mcd",
-    "build:linux-x64": "bun build --compile --minify --target=bun-linux-x64 src/index.ts --outfile dist/discord-mcd-linux-x64",
-    "build:linux-arm64": "bun build --compile --minify --target=bun-linux-arm64 src/index.ts --outfile dist/discord-mcd-linux-arm64",
-    "build:macos-x64": "bun build --compile --minify --target=bun-darwin-x64 src/index.ts --outfile dist/discord-mcd-macos-x64",
-    "build:macos-arm64": "bun build --compile --minify --target=bun-darwin-arm64 src/index.ts --outfile dist/discord-mcd-macos-arm64",
-    "build:windows-x64": "bun build --compile --minify --target=bun-windows-x64 src/index.ts --outfile dist/discord-mcd-windows-x64.exe",
+    "build": "bun build --compile --minify src/index.ts --outfile ddex",
+    "build:linux-x64": "bun build --compile --minify --target=bun-linux-x64 src/index.ts --outfile dist/ddex-linux-x64",
+    "build:linux-arm64": "bun build --compile --minify --target=bun-linux-arm64 src/index.ts --outfile dist/ddex-linux-arm64",
+    "build:macos-x64": "bun build --compile --minify --target=bun-darwin-x64 src/index.ts --outfile dist/ddex-macos-x64",
+    "build:macos-arm64": "bun build --compile --minify --target=bun-darwin-arm64 src/index.ts --outfile dist/ddex-macos-arm64",
+    "build:windows-x64": "bun build --compile --minify --target=bun-windows-x64 src/index.ts --outfile dist/ddex-windows-x64.exe",
     "build:all": "bun run build:linux-x64 && bun run build:linux-arm64 && bun run build:macos-x64 && bun run build:macos-arm64 && bun run build:windows-x64",
     "test": "bun test tests/unit/",
     "test:integration": "bun test tests/integration/",

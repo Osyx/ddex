@@ -44,8 +44,8 @@ jobs:
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: |
           gh release upload "$TAG_NAME" \
-            dist/discord-mcd-linux-x64 \
-            dist/discord-mcd-linux-arm64 \
-            dist/discord-mcd-macos-x64 \
-            dist/discord-mcd-macos-arm64 \
-            "dist/discord-mcd-windows-x64.exe"
+            dist/ddex-linux-x64 \
+            dist/ddex-linux-arm64 \
+            dist/ddex-macos-x64 \
+            dist/ddex-macos-arm64 \
+            "dist/ddex-windows-x64.exe"

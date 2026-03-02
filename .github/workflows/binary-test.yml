@@ -14,13 +14,13 @@ jobs:
         include:
           - os: ubuntu-latest
             build-script: build:linux-x64
-            binary: dist/discord-mcd-linux-x64
+            binary: dist/ddex-linux-x64
           - os: macos-latest
             build-script: build:macos-arm64
-            binary: dist/discord-mcd-macos-arm64
+            binary: dist/ddex-macos-arm64
           - os: windows-latest
             build-script: build:windows-x64
-            binary: dist/discord-mcd-windows-x64.exe
+            binary: dist/ddex-windows-x64.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -39,10 +39,10 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            cp "${{ matrix.binary }}" discord-mcd.exe
+            cp "${{ matrix.binary }}" ddex.exe
           else
-            cp "${{ matrix.binary }}" discord-mcd
-            chmod +x discord-mcd
+            cp "${{ matrix.binary }}" ddex
+            chmod +x ddex
           fi
 
       - name: Run binary tests

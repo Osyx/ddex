@@ -12,7 +12,7 @@ import { spawnSync } from "child_process";
 import { platform } from "os";
 
 const FIXTURE = join(import.meta.dirname, "../fixtures/export");
-const BINARY = platform() === "win32" ? "./discord-mcd.exe" : "./discord-mcd";
+const BINARY = platform() === "win32" ? "./ddex.exe" : "./ddex";
 
 const run = (args: string[]): { stdout: string; stderr: string; status: number } => {
   const result = spawnSync(BINARY, args, { encoding: "utf8" });
@@ -64,7 +64,7 @@ describe("binary smoke tests", () => {
   });
 
   test("--output writes a text file", async () => {
-    const outPath = join(tmpdir(), `discord-mcd-test-${Date.now()}.txt`);
+    const outPath = join(tmpdir(), `ddex-test-${Date.now()}.txt`);
     try {
       const result = run([FIXTURE, "--output", outPath]);
       expect(result.status).toBe(0);
@@ -77,7 +77,7 @@ describe("binary smoke tests", () => {
   });
 
   test("--output writes a JSON file", async () => {
-    const outPath = join(tmpdir(), `discord-mcd-test-${Date.now()}.json`);
+    const outPath = join(tmpdir(), `ddex-test-${Date.now()}.json`);
     try {
       const result = run([FIXTURE, "--output", outPath]);
       expect(result.status).toBe(0);
@@ -121,7 +121,7 @@ describe("binary smoke tests", () => {
     const JSZip = (await import("jszip")).default;
     const { readFileSync, readdirSync, statSync } = await import("fs");
     const { join: pathJoin } = await import("path");
-    const zipPath = join(tmpdir(), `discord-mcd-test-${Date.now()}.zip`);
+    const zipPath = join(tmpdir(), `ddex-test-${Date.now()}.zip`);
     try {
       const zip = new JSZip();
       const addDir = (dir: string, zipDir: string) => {

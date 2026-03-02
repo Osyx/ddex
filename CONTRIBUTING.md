@@ -1,4 +1,4 @@
-# Contributing to discord-mcd
+# Contributing to Discord Data Explorer
 
 Thank you for your interest in contributing! This document explains how to get started.
 
@@ -12,14 +12,14 @@ Thank you for your interest in contributing! This document explains how to get s
 2. Clone your fork:
 
 ```sh
-git clone https://github.com/<your-username>/discord-mcd.git
-cd discord-mcd
+git clone https://github.com/<your-username>/ddex.git
+cd ddex
 ```
 
 3. Add the upstream remote:
 
 ```sh
-git remote add upstream https://github.com/Osyx/discord-mcd.git
+git remote add upstream https://github.com/Osyx/ddex.git
 ```
 
 ## Install dependencies

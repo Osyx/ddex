@@ -2,7 +2,7 @@
 
 ## Offline-only tool
 
-discord-mcd is a fully offline CLI tool. It reads files from your local disk and makes no network requests at any point. Your Discord data export never leaves your machine.
+ddex is a fully offline CLI tool. It reads files from your local disk and makes no network requests at any point. Your Discord data export never leaves your machine.
 
 ## Reporting a vulnerability
 
@@ -10,14 +10,14 @@ discord-mcd is a fully offline CLI tool. It reads files from your local disk and
 
 Report vulnerabilities privately using GitHub's built-in vulnerability reporting feature:
 
-1. Go to [github.com/Osyx/discord-mcd/security/advisories/new](https://github.com/Osyx/discord-mcd/security/advisories/new), or
+1. Go to [github.com/Osyx/ddex/security/advisories/new](https://github.com/Osyx/ddex/security/advisories/new), or
 2. Navigate to the repository on GitHub, then: **Security** tab > **Advisories** > **Report a vulnerability**.
 
 You will receive a response as soon as possible. Please include as much detail as you can: a description of the issue, steps to reproduce, and the potential impact.
 
 ## Scope
 
-Because discord-mcd is a local CLI tool with no network access, the following are considered in scope for security reports:
+Because ddex is a local CLI tool with no network access, the following are considered in scope for security reports:
 
 - Vulnerabilities in dependencies that could be exploited via a crafted input file.
 - Any behaviour that causes the tool to read from or write to locations outside of the provided input path and the system's designated temp directory.

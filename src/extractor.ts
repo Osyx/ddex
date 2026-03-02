@@ -76,7 +76,7 @@ export const resolveExport = async (
     throw new Error(`Input must be a directory or a .zip file, got: ${input}`);
   }
 
-  const tempDir = join(tmpdir(), `discord-mcd-${randomUUID()}`);
+  const tempDir = join(tmpdir(), `ddex-${randomUUID()}`);
   prog.phase("Extracting ZIP");
 
   await extractMessageFiles(input, tempDir, prog);

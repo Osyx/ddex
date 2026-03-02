@@ -3,4 +3,4 @@
 
 # Treat binaries as binary (no line-ending conversion)
 *.exe binary
-dist/discord-mcd-* binary
+dist/ddex-* binary

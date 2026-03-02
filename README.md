@@ -1,6 +1,6 @@
-# discord-mcd
+# Discord Data Explorer
 
-Offline CLI tool that analyses a Discord GDPR data export and reports the words you type most often.
+Offline CLI tool (`ddex`) that analyses a Discord GDPR data export and reports the words you type most often.
 Similar-sounding words (e.g. `haha`, `hahah`, `hahsha`) are automatically clustered together.
 
 All processing is entirely local, no network calls are made.
@@ -11,25 +11,25 @@ Pre-built standalone binaries are available on the [releases page](../../release
 
 Releases are created automatically when a new version is merged. Each release includes a `CHANGELOG.md` entry describing what changed.
 
-| Platform            | File                          |
-| ------------------- | ----------------------------- |
-| Linux x64           | `discord-mcd-linux-x64`       |
-| Linux ARM64         | `discord-mcd-linux-arm64`     |
-| macOS Intel         | `discord-mcd-macos-x64`       |
-| macOS Apple Silicon | `discord-mcd-macos-arm64`     |
-| Windows x64         | `discord-mcd-windows-x64.exe` |
+| Platform            | File                    |
+| ------------------- | ----------------------- |
+| Linux x64           | `ddex-linux-x64`        |
+| Linux ARM64         | `ddex-linux-arm64`      |
+| macOS Intel         | `ddex-macos-x64`        |
+| macOS Apple Silicon | `ddex-macos-arm64`      |
+| Windows x64         | `ddex-windows-x64.exe`  |
 
 On macOS/Linux you may need to mark the binary as executable:
 
 ```sh
-chmod +x discord-mcd-*
+chmod +x ddex-*
 ```
 
 ## Getting your Discord data package
 
 1. Open Discord → **User Settings** → **Data & Privacy** → **Request Your Data**
 2. Discord emails you a download link (usually within 30 days)
-3. Download the `.zip`: pass it directly to `discord-mcd`
+3. Download the `.zip`: pass it directly to `ddex`
 
 > **Your files are never modified.**
 > If a `.zip` is provided it is extracted to a temporary directory which is deleted immediately after processing.
@@ -37,7 +37,7 @@ chmod +x discord-mcd-*
 ## Usage
 
 ```
-discord-mcd <path-to-export> [options]
+ddex <path-to-export> [options]
 
 Arguments:
   path-to-export      Path to your Discord data package.
@@ -56,19 +56,19 @@ Options:
 
 ```sh
 # Show top 20 words
-discord-mcd ~/Downloads/package.zip --top 20
+ddex ~/Downloads/package.zip --top 20
 
 # Pass an already-unzipped export directory
-discord-mcd ~/Downloads/package/ --top 20
+ddex ~/Downloads/package/ --top 20
 
 # Save results to a JSON file
-discord-mcd ~/Downloads/package.zip --output results.json
+ddex ~/Downloads/package.zip --output results.json
 
 # Filter stop words for both English and Swedish
-discord-mcd ~/Downloads/package.zip --language eng,swe
+ddex ~/Downloads/package.zip --language eng,swe
 
 # Include stop words (the, a, is, …) in the results
-discord-mcd ~/Downloads/package.zip --include-stop-words
+ddex ~/Downloads/package.zip --include-stop-words
 ```
 
 ---
@@ -82,8 +82,8 @@ discord-mcd ~/Downloads/package.zip --include-stop-words
 ### Setup
 
 ```sh
-git clone https://github.com/Osyx/discord-mcd.git
-cd discord-mcd
+git clone https://github.com/Osyx/ddex.git
+cd ddex
 bun install
 ```
 

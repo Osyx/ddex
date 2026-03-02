@@ -10,7 +10,7 @@ import { createProgress } from "./progress.js";
 import { version } from "../package.json";
 
 const HELP = `
-Usage: discord-mcd <path-to-export> [options]
+Usage: ddex <path-to-export> [options]
 
 Options:
   --top <n>               Show top N word groups (default: 10)
