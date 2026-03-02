@@ -1,0 +1,7 @@
+[
+  {"ID": "m001", "Timestamp": "2024-01-01 10:00:00", "Contents": "hello alice <@300000000000333333>", "Attachments": ""},
+  {"ID": "m002", "Timestamp": "2024-01-01 10:01:00", "Contents": "how are you doing", "Attachments": ""},
+  {"ID": "m003", "Timestamp": "2024-01-01 10:02:00", "Contents": "testing testing", "Attachments": ""},
+  {"ID": "m004", "Timestamp": "2024-01-01 10:03:00", "Contents": "one more message here", "Attachments": ""},
+  {"ID": "m005", "Timestamp": "2024-01-01 10:04:00", "Contents": "final message for today", "Attachments": ""}
+]

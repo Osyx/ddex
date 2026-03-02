@@ -1,0 +1,14 @@
+{
+  "id": "900000000000000001",
+  "username": "testuser",
+  "discriminator": "0000",
+  "email": null,
+  "avatar_hash": null,
+  "display_name": null,
+  "payments": [],
+  "relationships": [
+    {"user": {"id": "100000000000111111", "username": "alice", "discriminator": "0000"}, "display_name": null},
+    {"user": {"id": "200000000000222222", "username": "bob", "discriminator": "1234"}, "display_name": null},
+    {"user": {"id": "300000000000333333", "username": "charlie", "discriminator": "0000"}, "display_name": null}
+  ]
+}

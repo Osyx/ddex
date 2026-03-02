@@ -1,0 +1,4 @@
+{"event_type":"join_voice_channel","client_track_timestamp":"\"2024-01-01T10:00:00Z","channel_id":"100000000000111111","guild_id":null}
+{"event_type":"leave_voice_channel","client_track_timestamp":"\"2024-01-01T11:00:00Z","channel_id":"100000000000111111"}
+{"event_type":"join_voice_channel","client_track_timestamp":"\"2024-01-02T10:00:00Z","channel_id":"100000000000111111","guild_id":null}
+{"event_type":"leave_voice_channel","client_track_timestamp":"\"2024-01-02T10:30:00Z","channel_id":"100000000000111111"}
