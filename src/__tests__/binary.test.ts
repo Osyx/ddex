@@ -117,13 +117,27 @@ describe("binary smoke tests", () => {
   });
 
   test("accepts a ZIP file", async () => {
-    // Create a ZIP of the fixture using adm-zip
-    const AdmZip = (await import("adm-zip")).default;
+    // Create a ZIP of the fixture using jszip
+    const JSZip = (await import("jszip")).default;
+    const { readFileSync, readdirSync, statSync } = await import("fs");
+    const { join: pathJoin } = await import("path");
     const zipPath = join(tmpdir(), `discord-mcd-test-${Date.now()}.zip`);
     try {
-      const zip = new AdmZip();
-      zip.addLocalFolder(FIXTURE);
-      zip.writeZip(zipPath);
+      const zip = new JSZip();
+      const addDir = (dir: string, zipDir: string) => {
+        for (const entry of readdirSync(dir)) {
+          const full = pathJoin(dir, entry);
+          const rel = zipDir ? `${zipDir}/${entry}` : entry;
+          if (statSync(full).isDirectory()) {
+            addDir(full, rel);
+          } else {
+            zip.file(rel, readFileSync(full));
+          }
+        }
+      };
+      addDir(FIXTURE, "");
+      const buf = await zip.generateAsync({ type: "nodebuffer" });
+      require("fs").writeFileSync(zipPath, buf);
 
       const result = run([zipPath]);
       expect(result.status).toBe(0);

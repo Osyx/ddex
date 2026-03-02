@@ -1,10 +1,9 @@
-import { DoubleMetaphone, LevenshteinDistance } from "natural";
+import { doubleMetaphone } from "double-metaphone";
+import { distance as levenshtein } from "fastest-levenshtein";
 import type { WordGroup, VariantCount } from "./types.js";
 
-const dm = new DoubleMetaphone();
-
 const phoneticKey = (word: string): string => {
-  const [primary = "", secondary = ""] = dm.process(word);
+  const [primary = "", secondary = ""] = doubleMetaphone(word);
   return primary !== "" ? primary : secondary !== "" ? secondary : word;
 };
 
@@ -40,7 +39,7 @@ export const cluster = (counts: Map<string, number>): WordGroup[] => {
         if (representative === undefined) continue;
         const maxLen = Math.max(variant.word.length, representative.length);
         const threshold = editThreshold(maxLen);
-        if (LevenshteinDistance(variant.word, representative) <= threshold) {
+        if (levenshtein(variant.word, representative) <= threshold) {
           group.push(variant);
           placed = true;
           break;

@@ -1,9 +1,55 @@
-import AdmZip from "adm-zip";
-import { randomBytes } from "crypto";
+import { createWriteStream, mkdirSync } from "fs";
 import { rm, stat } from "fs/promises";
 import { tmpdir } from "os";
-import { join } from "path";
+import { dirname, join } from "path";
+import yauzl from "yauzl";
 import type { Progress } from "./progress.js";
+
+const isMessageFile = (entryName: string): boolean => {
+  const lower = entryName.toLowerCase();
+  return lower.endsWith("/messages.csv") || lower.endsWith("/messages.json");
+};
+
+const extractMessageFiles = (zipPath: string, destDir: string, prog: Progress): Promise<void> =>
+  new Promise((resolve, reject) => {
+    yauzl.open(zipPath, { lazyEntries: true }, (openErr, zipfile) => {
+      if (openErr || !zipfile) return reject(openErr ?? new Error("Failed to open ZIP"));
+
+      const total = zipfile.entryCount;
+      let i = 0;
+
+      zipfile.readEntry();
+
+      zipfile.on("entry", (entry: yauzl.Entry) => {
+        i++;
+        const isDir = entry.fileName.endsWith("/");
+
+        if (isDir || !isMessageFile(entry.fileName)) {
+          zipfile.readEntry();
+          return;
+        }
+
+        prog.update(`  Extracting ${i}/${total}: ${entry.fileName}`);
+
+        zipfile.openReadStream(entry, (streamErr, readStream) => {
+          if (streamErr || !readStream)
+            return reject(streamErr ?? new Error("Failed to open entry stream"));
+
+          const destPath = join(destDir, entry.fileName);
+          mkdirSync(dirname(destPath), { recursive: true });
+
+          const writeStream = createWriteStream(destPath);
+          writeStream.on("error", reject);
+          writeStream.on("finish", () => zipfile.readEntry());
+          readStream.on("error", reject);
+          readStream.pipe(writeStream);
+        });
+      });
+
+      zipfile.on("end", resolve);
+      zipfile.on("error", reject);
+    });
+  });
 
 export const resolveExport = async (
   input: string,
@@ -20,24 +66,16 @@ export const resolveExport = async (
     };
   }
 
-  if (!input.endsWith(".zip")) {
+  if (!input.toLowerCase().endsWith(".zip")) {
     throw new Error(`Input must be a directory or a .zip file, got: ${input}`);
   }
 
-  const tempDir = join(tmpdir(), `discord-mcd-${randomBytes(8).toString("hex")}`);
+  const tempDir = join(tmpdir(), `discord-mcd-${Math.random().toString(36).slice(2)}`);
   prog.phase("Extracting ZIP");
 
-  const zip = new AdmZip(input);
-  const entries = zip.getEntries();
+  await extractMessageFiles(input, tempDir, prog);
 
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    if (!entry) continue;
-    prog.update(`  Extracting ${i + 1}/${entries.length}: ${entry.entryName}`);
-    zip.extractEntryTo(entry, tempDir, true, true);
-  }
-
-  prog.done(`Extracted ${entries.length} files to temp dir`);
+  prog.done("Extracted message files");
 
   return {
     exportDir: tempDir,
