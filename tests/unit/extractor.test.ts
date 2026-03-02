@@ -60,8 +60,8 @@ describe("resolveExport", () => {
 
     const zip = new JSZip();
     zip.file(
-      "messages/c123/messages.csv",
-      "ID,Timestamp,Contents,Attachments\n1,2024-01-01,hello,",
+      "messages/c123/messages.json",
+      JSON.stringify([{ ID: "1", Timestamp: "2024-01-01", Contents: "hello", Attachments: "" }]),
     );
     zip.file("messages/c123/channel.json", '{"id":"123"}');
     const buf = await zip.generateAsync({ type: "nodebuffer" });
@@ -70,9 +70,9 @@ describe("resolveExport", () => {
     const result = await resolveExport(zipPath, prog);
     toCleanup.push(result.exportDir);
 
-    // The temp dir should exist and contain the extracted messages CSV
+    // The temp dir should exist and contain the extracted messages JSON
     expect(existsSync(result.exportDir)).toBe(true);
-    expect(existsSync(join(result.exportDir, "messages/c123/messages.csv"))).toBe(true);
+    expect(existsSync(join(result.exportDir, "messages/c123/messages.json"))).toBe(true);
 
     // cleanup should delete the temp dir
     await result.cleanup();
@@ -95,10 +95,8 @@ describe("resolveExport", () => {
     // Should succeed without throwing
     expect(result.exportDir).toBeTruthy();
 
-    // No messages.csv or messages.json should have been extracted
-    const hasMessages =
-      existsSync(join(result.exportDir, "messages.csv")) ||
-      existsSync(join(result.exportDir, "messages.json"));
+    // No messages.json should have been extracted
+    const hasMessages = existsSync(join(result.exportDir, "messages.json"));
     expect(hasMessages).toBe(false);
 
     await result.cleanup();
@@ -110,14 +108,20 @@ describe("resolveExport", () => {
 
     const zip = new JSZip();
     // Legitimate entry
-    zip.file("messages/c456/messages.csv", "ID,Timestamp,Contents,Attachments\n1,2024-01-01,safe,");
+    zip.file(
+      "messages/c456/messages.json",
+      JSON.stringify([{ ID: "1", Timestamp: "2024-01-01", Contents: "safe", Attachments: "" }]),
+    );
     // Attempt path-traversal entry (yauzl may reject the ZIP entirely, which is also safe)
-    zip.file("../../evil-messages.csv", "ID,Timestamp,Contents,Attachments\n1,2024-01-01,evil,");
+    zip.file(
+      "../../evil-messages.json",
+      JSON.stringify([{ ID: "1", Timestamp: "2024-01-01", Contents: "evil", Attachments: "" }]),
+    );
     const buf = await zip.generateAsync({ type: "nodebuffer" });
     writeFileSync(zipPath, buf);
 
     // A file written outside any temp dir we control
-    const evilPath = join(tmpdir(), "evil-messages.csv");
+    const evilPath = join(tmpdir(), "evil-messages.json");
 
     let exportDir: string | undefined;
     try {
@@ -126,7 +130,7 @@ describe("resolveExport", () => {
       toCleanup.push(exportDir);
 
       // If extraction succeeded, the legit file should be present
-      expect(existsSync(join(exportDir, "messages/c456/messages.csv"))).toBe(true);
+      expect(existsSync(join(exportDir, "messages/c456/messages.json"))).toBe(true);
 
       await result.cleanup();
     } catch {

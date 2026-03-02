@@ -6,10 +6,8 @@ import { dirname, join, resolve as resolvePath, sep } from "path";
 import yauzl from "yauzl";
 import type { Progress } from "./progress.js";
 
-const isMessageEntryPath = (entryName: string): boolean => {
-  const lower = entryName.toLowerCase();
-  return lower.endsWith("/messages.csv") || lower.endsWith("/messages.json");
-};
+const isMessageEntryPath = (entryName: string): boolean =>
+  entryName.toLowerCase().endsWith("/messages.json");
 
 const extractMessageFiles = (zipPath: string, destDir: string, prog: Progress): Promise<void> =>
   new Promise((resolve, reject) => {

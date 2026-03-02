@@ -172,7 +172,7 @@ The resulting binaries are fully standalone.
 ### How it works
 
 1. **Extract**: if the input is a `.zip`, it is extracted to a temp directory
-2. **Parse**: every `messages/c*/messages.csv` file in the export is streamed row by row
+2. **Parse**: every `messages/c*/messages.json` file in the export is parsed
 3. **Tokenise**: Discord mentions, URLs, emoji, and markdown are stripped; text is lowercased and split into words (≥ 2 chars, non-numeric)
 4. **Count**: word frequencies are accumulated in an in-memory SQLite database, so memory usage stays flat regardless of message history size
 5. **Filter**: stop words are removed using the [`stopword`](https://www.npmjs.com/package/stopword) package (62 languages supported, default: `eng`)
@@ -186,7 +186,7 @@ src/
   index.ts        CLI entry point, argument parsing, and command dispatch
   cmd.ts          Shared CLI utilities
   extractor.ts    ZIP detection and extraction to temp dir
-  parser.ts       Walk export directory, stream messages.csv files
+  parser.ts       Walk export directory, parse messages.json files
   tokenizer.ts    Strip noise, split into word tokens
   stopwords.ts    Stop-word filtering via the stopword package (62 languages)
   db.ts           SQLite-backed word frequency store (bun:sqlite)

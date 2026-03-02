@@ -1,14 +1,9 @@
-import { parse } from "csv-parse";
-import { createReadStream } from "fs";
 import { readdir, stat } from "fs/promises";
 import { join } from "path";
 import { basename } from "path";
 import type { Progress } from "./progress.js";
 
-const isMessageBasename = (name: string): boolean => {
-  const lower = name.toLowerCase();
-  return lower === "messages.csv" || lower === "messages.json";
-};
+const isMessageFile = (name: string): boolean => name.toLowerCase() === "messages.json";
 
 const findMessageFiles = async (dir: string): Promise<string[]> => {
   const results: string[] = [];
@@ -17,7 +12,7 @@ const findMessageFiles = async (dir: string): Promise<string[]> => {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
       results.push(...(await findMessageFiles(fullPath)));
-    } else if (isMessageBasename(entry.name)) {
+    } else if (isMessageFile(entry.name)) {
       results.push(fullPath);
     }
   }
@@ -50,61 +45,36 @@ export const parseExport = async (
     if (file === undefined) continue;
     prog.update(`  Parsing ${fileIndex + 1}/${total}: ${basename(file)}`);
 
-    if (file.toLowerCase().endsWith(".json")) {
-      const bunFile = Bun.file(file);
-      if (bunFile.size > 512 * 1024 * 1024) {
-        process.stderr.write(`Warning: ${file} is over 512 MB, processing may be slow.\n`);
-      }
-      const raw = (await bunFile.json()) as unknown;
-      let rows: unknown[];
-      if (Array.isArray(raw)) {
-        rows = raw;
-      } else if (
-        typeof raw === "object" &&
-        raw !== null &&
-        "messages" in raw &&
-        Array.isArray(raw.messages)
-      ) {
-        rows = raw.messages;
-      } else {
-        process.stderr.write(`Warning: ${file} does not contain a top-level array, skipping.\n`);
-        continue;
-      }
-      for (const row of rows) {
-        if (typeof row !== "object" || row === null) continue;
-        const pairs = Object.entries(row);
-        const content = pairs.find(
-          ([k]) => k === "Contents" || k === "contents" || k === "content",
-        )?.[1];
-        const msg = typeof content === "string" ? content : "";
-        if (msg) {
-          onContent(msg);
-          totalMessages++;
-        }
-      }
+    const bunFile = Bun.file(file);
+    if (bunFile.size > 512 * 1024 * 1024) {
+      process.stderr.write(`Warning: ${file} is over 512 MB, processing may be slow.\n`);
+    }
+    const raw = (await bunFile.json()) as unknown;
+    let rows: unknown[];
+    if (Array.isArray(raw)) {
+      rows = raw;
+    } else if (
+      typeof raw === "object" &&
+      raw !== null &&
+      "messages" in raw &&
+      Array.isArray((raw as Record<string, unknown>).messages)
+    ) {
+      rows = (raw as Record<string, unknown[]>).messages;
     } else {
-      await new Promise<void>((resolve, reject) => {
-        const parser = parse({
-          columns: true,
-          skip_empty_lines: true,
-          trim: true,
-          relax_column_count: true,
-        });
-
-        parser.on("data", (row: Record<string, string>) => {
-          const content = row["Contents"] ?? row["contents"] ?? "";
-          if (content) {
-            onContent(content);
-            totalMessages++;
-          }
-        });
-        parser.on("error", reject);
-        parser.on("end", resolve);
-
-        const readStream = createReadStream(file);
-        readStream.on("error", reject);
-        readStream.pipe(parser);
-      });
+      process.stderr.write(`Warning: ${file} does not contain a top-level array, skipping.\n`);
+      continue;
+    }
+    for (const row of rows) {
+      if (typeof row !== "object" || row === null) continue;
+      const content =
+        (row as Record<string, unknown>)["Contents"] ??
+        (row as Record<string, unknown>)["contents"] ??
+        (row as Record<string, unknown>)["content"];
+      const msg = typeof content === "string" ? content : "";
+      if (msg) {
+        onContent(msg);
+        totalMessages++;
+      }
     }
   }
 
