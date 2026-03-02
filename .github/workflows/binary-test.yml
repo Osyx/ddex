@@ -1,0 +1,49 @@
+name: Binary Tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  binary-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build-script: build:linux-x64
+            binary: dist/discord-mcd-linux-x64
+          - os: macos-latest
+            build-script: build:macos-arm64
+            binary: dist/discord-mcd-macos-arm64
+          - os: windows-latest
+            build-script: build:windows-x64
+            binary: dist/discord-mcd-windows-x64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Build binary
+        run: bun run ${{ matrix.build-script }}
+
+      - name: Copy binary to project root (expected by test)
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cp "${{ matrix.binary }}" discord-mcd.exe
+          else
+            cp "${{ matrix.binary }}" discord-mcd
+            chmod +x discord-mcd
+          fi
+
+      - name: Run binary tests
+        run: bun run test:binary

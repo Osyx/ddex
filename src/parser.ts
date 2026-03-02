@@ -5,6 +5,11 @@ import { join } from "path";
 import { basename } from "path";
 import type { Progress } from "./progress.js";
 
+const isMessageFile = (name: string): boolean => {
+  const lower = name.toLowerCase();
+  return lower === "messages.csv" || lower === "messages.json";
+};
+
 const findMessageFiles = async (dir: string): Promise<string[]> => {
   const results: string[] = [];
   const entries = await readdir(dir);
@@ -13,7 +18,7 @@ const findMessageFiles = async (dir: string): Promise<string[]> => {
     const s = await stat(fullPath);
     if (s.isDirectory()) {
       results.push(...(await findMessageFiles(fullPath)));
-    } else if (entry === "messages.csv") {
+    } else if (isMessageFile(entry)) {
       results.push(fullPath);
     }
   }
@@ -31,10 +36,12 @@ export const parseExport = async (
   if (!s.isDirectory()) {
     files = [exportDir];
   } else {
-    const messagesDir = join(exportDir, "messages");
+    const entries = await readdir(exportDir);
+    const msgDirEntry = entries.find((e) => e.toLowerCase() === "messages");
+    const messagesDir = msgDirEntry ? join(exportDir, msgDirEntry) : null;
     try {
-      await stat(messagesDir);
-      files = await findMessageFiles(messagesDir);
+      if (messagesDir) await stat(messagesDir);
+      files = await findMessageFiles(messagesDir ?? exportDir);
     } catch {
       files = await findMessageFiles(exportDir);
     }
@@ -49,26 +56,43 @@ export const parseExport = async (
     if (file === undefined) continue;
     prog.update(`  Parsing ${fileIndex + 1}/${total}: ${basename(file)}`);
 
-    await new Promise<void>((resolve, reject) => {
-      const parser = parse({
-        columns: true,
-        skip_empty_lines: true,
-        trim: true,
-        relax_column_count: true,
-      });
-
-      parser.on("data", (row: Record<string, string>) => {
-        const content = row["Contents"] ?? row["contents"] ?? "";
-        if (content) {
-          onContent(content);
+    if (file.toLowerCase().endsWith(".json")) {
+      const raw = (await Bun.file(file).json()) as unknown;
+      const rows: unknown[] = Array.isArray(raw) ? raw : [];
+      for (const row of rows) {
+        if (typeof row !== "object" || row === null) continue;
+        const pairs = Object.entries(row);
+        const content = pairs.find(
+          ([k]) => k === "Contents" || k === "contents" || k === "content",
+        )?.[1];
+        const msg = typeof content === "string" ? content : "";
+        if (msg) {
+          onContent(msg);
           totalMessages++;
         }
-      });
-      parser.on("error", reject);
-      parser.on("end", resolve);
+      }
+    } else {
+      await new Promise<void>((resolve, reject) => {
+        const parser = parse({
+          columns: true,
+          skip_empty_lines: true,
+          trim: true,
+          relax_column_count: true,
+        });
 
-      createReadStream(file).pipe(parser);
-    });
+        parser.on("data", (row: Record<string, string>) => {
+          const content = row["Contents"] ?? row["contents"] ?? "";
+          if (content) {
+            onContent(content);
+            totalMessages++;
+          }
+        });
+        parser.on("error", reject);
+        parser.on("end", resolve);
+
+        createReadStream(file).pipe(parser);
+      });
+    }
   }
 
   prog.done(`Parsed ${totalMessages.toLocaleString()} messages from ${total} file(s)`);

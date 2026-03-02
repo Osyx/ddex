@@ -121,6 +121,8 @@ The resulting binaries are fully standalone.
 | `bun run build:all`         | Build for all platforms → `dist/`               |
 | `bun run start`             | Run the CLI directly with Bun (no compile step) |
 | `bun run typecheck`         | Check TypeScript types                          |
+| `bun test`                  | Run all unit tests                              |
+| `bun run test:binary`       | Build binary and run integration tests          |
 | `bun run lint`              | Lint with oxlint                                |
 | `bun run check`             | Lint + type-check with oxlint                   |
 | `bun run format`            | Format source files with oxfmt                  |
@@ -153,6 +155,14 @@ src/
 ```
 
 ### CI / GitHub Actions
+
+#### `test.yml`: Automated tests
+
+Runs `bun test` (unit tests) on every pull request. Add this as a **required status check** in your branch protection rules (**Settings → Branches → Branch protection rules → Require status checks → `test`**) to enforce that all tests must pass before merging.
+
+#### `binary-test.yml`: Binary integration tests
+
+Runs on every pull request using a matrix of three runners (`ubuntu-latest`, `macos-latest`, `windows-latest`). Each runner builds the platform-specific binary and runs `bun run test:binary` against the test fixture to verify the compiled binary works end-to-end on that OS. Add the `binary-test (ubuntu-latest)`, `binary-test (macos-latest)`, and `binary-test (windows-latest)` jobs as required status checks to enforce cross-platform correctness before merging.
 
 #### `release.yml`: Automated releases
 

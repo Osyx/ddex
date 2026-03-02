@@ -20,8 +20,8 @@ export const tokenize = (content: string): string[] => {
     // Lowercase
     .toLowerCase();
 
-  // Split on anything that's not a letter or apostrophe
-  const tokens = text.split(/[^a-z']+/);
+  // Split on anything that's not a Unicode letter or apostrophe
+  const tokens = text.split(/[^\p{L}']+/u);
 
   return tokens
     .filter((t) => {
