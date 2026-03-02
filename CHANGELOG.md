@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.0.3](https://github.com/Osyx/discord-mcd/compare/discord-mcd-v0.0.2...discord-mcd-v0.0.3) (2026-03-02)
+
+
+### Features
+
+* add comprehensive test suite ([539350f](https://github.com/Osyx/discord-mcd/commit/539350fcdfd3d620ee2b3d37658e2960dbd7a571))
+* enhance file extraction and parsing logic, add version option, and improve progress updates ([a31fc1b](https://github.com/Osyx/discord-mcd/commit/a31fc1ba7f83a7fb1fe1dc4f04c6411e1bb61e36))
+* optimize clustering by adding guard for large buckets and improving sorting logic ([9e6d118](https://github.com/Osyx/discord-mcd/commit/9e6d118655fca6ae3d6043f635dac80045f23890))
+* update workflows for better CI and testing ([8094581](https://github.com/Osyx/discord-mcd/commit/8094581c288c3b8b4b70a9640c39cefec3e676bf))
+
 ## [0.0.2](https://github.com/Osyx/discord-mcd/compare/discord-mcd-v0.0.1...discord-mcd-v0.0.2) (2026-03-02)
 
 
