@@ -12,6 +12,7 @@ import { spawnSync } from "child_process";
 import { platform } from "os";
 
 const FIXTURE = join(import.meta.dirname, "../fixtures/export");
+const ANALYTICS_FIXTURE = join(import.meta.dirname, "../fixtures/analytics");
 const BINARY = platform() === "win32" ? "./ddex.exe" : "./ddex";
 
 const run = (args: string[]): { stdout: string; stderr: string; status: number } => {
@@ -150,5 +151,26 @@ describe("binary smoke tests", () => {
     } finally {
       if (existsSync(zipPath)) rmSync(zipPath);
     }
+  });
+});
+
+describe("prediction command", () => {
+  test("shows predicted age and gender from fixture", () => {
+    const result = run(["prediction", ANALYTICS_FIXTURE]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("25-34");
+    expect(result.stdout).toContain("male");
+    expect(result.stdout).toContain("confidence");
+  });
+
+  test("--help exits 0 and prints usage", () => {
+    const result = run(["prediction", "--help"]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage");
+  });
+
+  test("exits non-zero when no path is provided", () => {
+    const result = run(["prediction"]);
+    expect(result.status).not.toBe(0);
   });
 });

@@ -40,7 +40,8 @@ chmod +x ddex-*
 ddex <command> [options]
 
 Commands:
-  words   Analyse your most-used words in a Discord export
+  words       Analyse your most-used words in a Discord export
+  prediction  Show Discord's predicted age group and gender for your account
 
 Options:
   --version, -V   Print version and exit
@@ -82,6 +83,35 @@ ddex words ~/Downloads/package.zip --language eng,swe
 
 # Include stop words (the, a, is, …) in the results
 ddex words ~/Downloads/package.zip --include-stop-words
+```
+
+### `ddex prediction`
+
+```
+ddex prediction <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
+```
+
+Example output:
+
+```
+Discord's demographic predictions
+──────────────────────────────────
+Age group:  25-34      (72.3% confidence)
+Gender:     male       (89.2% confidence)
+```
+
+Example usage:
+
+```sh
+ddex prediction ~/Downloads/package.zip
+ddex prediction ~/Downloads/package/
 ```
 
 ---
@@ -153,7 +183,7 @@ The resulting binaries are fully standalone.
 
 ```
 src/
-  index.ts        CLI entry point and argument parsing
+  index.ts        CLI entry point, argument parsing, and command dispatch
   extractor.ts    ZIP detection and extraction to temp dir
   parser.ts       Walk export directory, stream messages.csv files
   tokenizer.ts    Strip noise, split into word tokens
@@ -162,6 +192,7 @@ src/
   grouper.ts      Phonetic + edit-distance fuzzy clustering
   formatter.ts    Console and file output formatting
   progress.ts     TTY-aware progress reporter (writes to stderr)
+  predictor.ts    Locate and stream the analytics events file; extract demographic predictions
   types.ts        Shared TypeScript interfaces
 ```
 

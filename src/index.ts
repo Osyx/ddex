@@ -6,6 +6,7 @@ import { cluster } from "./grouper.js";
 import { formatConsole, writeOutput } from "./formatter.js";
 import { createWordDb } from "./db.js";
 import { resolveExport } from "./extractor.js";
+import { runPrediction } from "./predictor.js";
 import { createProgress } from "./progress.js";
 import { version } from "../package.json";
 
@@ -13,7 +14,8 @@ const HELP = `
 Usage: ddex <command> [options]
 
 Commands:
-  words   Analyse your most-used words in a Discord export
+  words       Analyse your most-used words in a Discord export
+  prediction  Show Discord's predicted age group and gender for your account
 
 Options:
   --version, -V   Print version and exit
@@ -34,6 +36,17 @@ Options:
                           Supported: ${SUPPORTED_LANGUAGES.join(", ")}
   --output <file>         Also write results to a file (JSON or plain text based on extension)
   --help, -h              Show this help message
+`.trim();
+
+const PREDICTION_HELP = `
+Usage: ddex prediction <path-to-export>
+
+Arguments:
+  path-to-export   Path to your Discord data package.
+                   Accepts a directory (unzipped export) or a .zip file.
+
+Options:
+  --help, -h       Show this help message
 `.trim();
 
 const parseWordsArgs = (args: string[]) => {
@@ -157,6 +170,43 @@ const runWords = async (args: string[]) => {
   }
 };
 
+const runPredictionCmd = async (args: string[]) => {
+  for (const arg of args) {
+    if (arg === "--help" || arg === "-h") {
+      console.log(PREDICTION_HELP);
+      process.exit(0);
+    }
+  }
+
+  const exportPath = args.find((a) => !a.startsWith("-"));
+  if (!exportPath) {
+    console.error("Error: path-to-export is required\n");
+    console.error(PREDICTION_HELP);
+    process.exit(1);
+  }
+
+  const prog = createProgress();
+  const result = await runPrediction(exportPath, prog);
+
+  const lines = ["\nDiscord's demographic predictions", "─".repeat(34)];
+
+  if (result.age) {
+    const pct = (result.age.probability * 100).toFixed(1);
+    lines.push(`Age group:  ${result.age.value.padEnd(10)} (${pct}% confidence)`);
+  } else {
+    lines.push("Age group:  not found");
+  }
+
+  if (result.gender) {
+    const pct = (result.gender.probability * 100).toFixed(1);
+    lines.push(`Gender:     ${result.gender.value.padEnd(10)} (${pct}% confidence)`);
+  } else {
+    lines.push("Gender:     not found");
+  }
+
+  console.log(lines.join("\n"));
+};
+
 const main = async () => {
   const args = process.argv.slice(2);
   const cmd = args[0];
@@ -178,6 +228,11 @@ const main = async () => {
 
   if (cmd === "words") {
     await runWords(args.slice(1));
+    return;
+  }
+
+  if (cmd === "prediction") {
+    await runPredictionCmd(args.slice(1));
     return;
   }
 

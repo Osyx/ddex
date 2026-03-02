@@ -1,0 +1,7 @@
+{"event_type":"page_view","timestamp":"2025-01-01T00:00:00Z","url":"https://discord.com/channels/@me"}
+{"event_type":"click","timestamp":"2025-01-01T00:01:00Z","element":"channel_item"}
+{"event_type":"impression","timestamp":"2025-01-01T00:02:00Z","component":"guild_list"}
+{"predicted_age":"25-34","probability":0.7234567890123456,"model":"age_classifier_v3"}
+{"event_type":"session_start","timestamp":"2025-01-01T00:03:00Z","platform":"web"}
+{"predicted_gender":"male","probability":0.8923456789012345,"model":"gender_classifier_v2"}
+{"event_type":"page_view","timestamp":"2025-01-01T00:04:00Z","url":"https://discord.com/friends"}
