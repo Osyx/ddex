@@ -143,6 +143,24 @@ describe("computePeopleStats", () => {
     expect(stats.topDmPartners[0]!.name).toBe("alice");
   });
 
+  test("counts calls per DM channel from callsByChannel", () => {
+    const channels = new Map<string, ChannelMeta>([
+      ["ch1", makeDMChannel("ch1", "alice", "u1")],
+      ["ch2", makeDMChannel("ch2", "bob", "u2")],
+    ]);
+    const msgCounts = new Map([
+      ["ch1", 10],
+      ["ch2", 5],
+    ]);
+    const callsByChannel = new Map([
+      ["ch1", 3],
+      ["ch2", 1],
+    ]);
+    const stats = computePeopleStats(null, channels, msgCounts, new Set(), [], 0, callsByChannel);
+    expect(stats.topDmPartners[0]!.calls).toBe(3);
+    expect(stats.topDmPartners[1]!.calls).toBe(1);
+  });
+
   test("strips DM prefix from channel name for display", () => {
     const channels = new Map<string, ChannelMeta>([["ch1", makeDMChannel("ch1", "alice", "u1")]]);
     const stats = computePeopleStats(null, channels, new Map([["ch1", 1]]), new Set(), [], 0);
@@ -187,13 +205,14 @@ describe("buildPeopleOutput", () => {
   test("renders top DM partners table", () => {
     const stats = makeStats({
       topDmPartners: [
-        { name: "alice", messages: 342 },
-        { name: "bob", messages: 201 },
+        { name: "alice", messages: 342, calls: 7 },
+        { name: "bob", messages: 201, calls: 0 },
       ],
     });
     const output = buildPeopleOutput(stats);
     expect(output).toContain("alice");
     expect(output).toContain("342");
+    expect(output).toContain("7"); // calls column shown when any > 0
     expect(output).toContain("bob");
     expect(output).toContain("201");
   });
