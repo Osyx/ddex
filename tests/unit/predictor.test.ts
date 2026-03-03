@@ -96,10 +96,7 @@ describe("runPrediction", () => {
 
   test("throws for non-directory non-zip input", async () => {
     const prog = createProgress();
-    const eventsFile = join(
-      FIXTURE_DIR,
-      "package/Activity/analytics/events-2025-00000-of-00001.json",
-    );
+    const eventsFile = join(FIXTURE_DIR, "Activity/analytics/events-2025-00000-of-00001.json");
     await expect(runPrediction(eventsFile, prog)).rejects.toThrow(
       "must be a directory or a .zip file",
     );

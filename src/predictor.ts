@@ -118,7 +118,7 @@ export const runPrediction = async (input: string, prog: Progress): Promise<Pred
     if (!eventsPath) {
       throw new Error(
         "Analytics events file not found.\n" +
-          "Expected: package/Activity/analytics/events-YYYY-00000-of-00001.json",
+          "Expected: Activity/<subfolder>/events-YYYY-00000-of-00001.json",
       );
     }
     result = await parseStream(createReadStream(eventsPath), prog);

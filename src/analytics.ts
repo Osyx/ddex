@@ -22,25 +22,36 @@ const findDirCI = (parent: string, name: string): string | undefined => {
   }
 };
 
-/** Find the analytics events JSONL file under exportDir (case-insensitive). */
-export const findEventsFile = (exportDir: string): string | undefined => {
-  const pkg = findDirCI(exportDir, "package");
-  if (!pkg) return undefined;
-  const activity = findDirCI(pkg, "activity");
-  if (!activity) return undefined;
-  const analytics = findDirCI(activity, "analytics");
-  if (!analytics) return undefined;
+/** Find all analytics events JSONL files under exportDir/Activity/* (case-insensitive). */
+export const findEventsFiles = (exportDir: string): string[] => {
+  const activity = findDirCI(exportDir, "activity");
+  if (!activity) return [];
   try {
-    const entries = readdirSync(analytics);
-    const match = entries.find((e) => EVENTS_FILE_RE.test(e));
-    return match ? join(analytics, match) : undefined;
+    const subDirs = readdirSync(activity, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => join(activity, e.name));
+    const found: string[] = [];
+    for (const dir of subDirs) {
+      try {
+        const entries = readdirSync(dir);
+        const match = entries.find((e) => EVENTS_FILE_RE.test(e));
+        if (match) found.push(join(dir, match));
+      } catch {
+        // skip unreadable subdirs
+      }
+    }
+    return found;
   } catch {
-    return undefined;
+    return [];
   }
 };
 
+/** @deprecated Use findEventsFiles. Kept for backward compatibility. */
+export const findEventsFile = (exportDir: string): string | undefined =>
+  findEventsFiles(exportDir)[0];
+
 /**
- * Scan the analytics events JSONL file, dispatching each event to matching collectors.
+ * Scan all analytics events JSONL files, dispatching each event to matching collectors.
  * Returns total lines scanned.
  */
 export async function scanAnalytics(
@@ -48,8 +59,8 @@ export async function scanAnalytics(
   collectors: AnalyticsCollector[],
   prog: Progress,
 ): Promise<number> {
-  const eventsPath = findEventsFile(exportDir);
-  if (!eventsPath) return 0;
+  const eventsPaths = findEventsFiles(exportDir);
+  if (eventsPaths.length === 0) return 0;
 
   // Build event_type → collectors[] dispatch map for O(1) lookup
   const dispatch = new Map<string, AnalyticsCollector[]>();
@@ -62,39 +73,42 @@ export async function scanAnalytics(
   }
 
   const allEventTypes = [...dispatch.keys()];
+  let totalLines = 0;
 
-  const stream = createReadStream(eventsPath);
-  const rl = createInterface({ input: stream, crlfDelay: Infinity });
-  let lines = 0;
+  for (const eventsPath of eventsPaths) {
+    const stream = createReadStream(eventsPath);
+    const rl = createInterface({ input: stream, crlfDelay: Infinity });
 
-  for await (const line of rl) {
-    lines++;
-    if (lines % 500_000 === 0) {
-      prog.update(`  Scanned ${(lines / 1_000_000).toFixed(1)}M lines...`);
-    }
+    for await (const line of rl) {
+      totalLines++;
+      if (totalLines % 500_000 === 0) {
+        prog.update(`  Scanned ${(totalLines / 1_000_000).toFixed(1)}M lines...`);
+      }
 
-    if (!allEventTypes.some((et) => line.includes(et))) continue;
+      if (!allEventTypes.some((et) => line.includes(et))) continue;
 
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(line) as Record<string, unknown>;
-    } catch {
-      continue;
-    }
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(line) as Record<string, unknown>;
+      } catch {
+        continue;
+      }
 
-    const eventType = typeof parsed.event_type === "string" ? parsed.event_type : null;
-    if (!eventType) continue;
+      const eventType = typeof parsed.event_type === "string" ? parsed.event_type : null;
+      if (!eventType) continue;
 
-    const matching = dispatch.get(eventType);
-    if (matching) {
-      for (const collector of matching) {
-        collector.onEvent(parsed);
+      const matching = dispatch.get(eventType);
+      if (matching) {
+        for (const collector of matching) {
+          collector.onEvent(parsed);
+        }
       }
     }
+
+    rl.close();
   }
 
-  rl.close();
-  return lines;
+  return totalLines;
 }
 
 /**
