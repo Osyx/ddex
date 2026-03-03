@@ -10,7 +10,7 @@ const UNICODE_EMOJI_RE = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu;
 const CUSTOM_EMOJI_RE = /<a?:(\w+):\d+>/g;
 
 /** Extract all emoji strings from a message text. Returns Unicode emoji chars and `:name:` for custom. */
-export function parseEmojisFromText(text: string): string[] {
+export const parseEmojisFromText = (text: string): string[] => {
   const results: string[] = [];
   for (const match of text.matchAll(UNICODE_EMOJI_RE)) {
     results.push(match[1]!);
@@ -19,7 +19,7 @@ export function parseEmojisFromText(text: string): string[] {
     results.push(`:${match[1]}:`);
   }
   return results;
-}
+};
 
 export class EmojiMessageAnalyzer implements MessageAnalyzer {
   readonly counts = new Map<string, number>();
@@ -56,10 +56,10 @@ export class ReactionCollector implements AnalyticsCollector {
   }
 }
 
-const topN = <T>(map: Map<T, number>, n: number): Array<[T, number]> =>
-  [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+const topN = <T>(map: Map<T, number>, n: number): [T, number][] =>
+  [...map.entries()].toSorted((a, b) => b[1] - a[1]).slice(0, n);
 
-function emojiTableLines(rows: Array<[string, number]>, customSet: Set<string> | null): string[] {
+const emojiTableLines = (rows: [string, number][], customSet: Set<string> | null): string[] => {
   const lines = ["  #   Emoji             Count"];
   for (let i = 0; i < rows.length; i++) {
     const [emoji, count] = rows[i]!;
@@ -70,9 +70,9 @@ function emojiTableLines(rows: Array<[string, number]>, customSet: Set<string> |
     lines.push(`  ${rank}   ${emojiCol}  ${countCol}${custom}`);
   }
   return lines;
-}
+};
 
-export async function runEmojis(exportPath: string, prog: Progress): Promise<void> {
+export const runEmojis = async (exportPath: string, prog: Progress): Promise<void> => {
   const { exportDir, cleanup } = await resolveExport(
     exportPath,
     prog,
@@ -140,4 +140,4 @@ export async function runEmojis(exportPath: string, prog: Progress): Promise<voi
   } finally {
     await cleanup();
   }
-}
+};

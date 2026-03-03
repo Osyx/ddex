@@ -9,13 +9,13 @@ import { termWidth, printOutput } from "./display.js";
 const DM_PREFIX = "Direct Message with ";
 
 /** Split an Attachments field string into individual attachment URLs/entries. */
-export function splitAttachments(field: string): string[] {
+export const splitAttachments = (field: string): string[] => {
   if (!field.trim()) return [];
   return field
     .split(/[\s,]+/)
     .map((s) => s.trim())
     .filter(Boolean);
-}
+};
 
 interface ChannelAttachmentStats {
   meta: ChannelMeta;
@@ -49,12 +49,12 @@ export class AttachmentsAnalyzer implements MessageAnalyzer {
   }
 }
 
-function channelDisplayName(meta: ChannelMeta): string {
+const channelDisplayName = (meta: ChannelMeta): string => {
   if (meta.isDM) return "Direct Message";
   return meta.name.startsWith("#") ? meta.name : `#${meta.name}`;
-}
+};
 
-function serverOrPartner(meta: ChannelMeta): string {
+const serverOrPartner = (meta: ChannelMeta): string => {
   if (meta.isDM) {
     // Use partner name from raw channel name when available
     if (meta.name.startsWith(DM_PREFIX)) {
@@ -63,9 +63,9 @@ function serverOrPartner(meta: ChannelMeta): string {
     return "DM";
   }
   return meta.guildName ?? meta.guildId ?? "Unknown Server";
-}
+};
 
-export async function runAttachments(exportPath: string, prog: Progress): Promise<void> {
+export const runAttachments = async (exportPath: string, prog: Progress): Promise<void> => {
   const { exportDir, cleanup } = await resolveExport(exportPath, prog, ExportFilter.messages);
 
   try {
@@ -81,7 +81,7 @@ export async function runAttachments(exportPath: string, prog: Progress): Promis
     const w = termWidth();
     const divider = "─".repeat(Math.min(w, 54));
     const topChannels = [...analyzer.channelStats.values()]
-      .sort((a, b) => b.totalAttachments - a.totalAttachments)
+      .toSorted((a, b) => b.totalAttachments - a.totalAttachments)
       .slice(0, 10);
 
     const msgLabel = "Messages with attachments:";
@@ -115,4 +115,4 @@ export async function runAttachments(exportPath: string, prog: Progress): Promis
   } finally {
     await cleanup();
   }
-}
+};

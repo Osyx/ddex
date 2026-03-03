@@ -20,7 +20,8 @@ export const requireExportPath = (args: string[], helpText: string): string => {
   for (const arg of args) {
     if (arg === "--help" || arg === "-h") showHelp(helpText);
   }
-  const path = args.find((a) => !a.startsWith("-"));
-  if (!path) exitError("Error: path-to-export is required\n", helpText);
+  const path =
+    args.find((a) => !a.startsWith("-")) ??
+    exitError("Error: path-to-export is required\n", helpText);
   return path;
 };

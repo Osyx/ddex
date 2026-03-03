@@ -69,7 +69,7 @@ const hl = (label: string, value: string, suffix = ""): string =>
 const twoCol = (l1: string, v1: string, l2: string, v2: string): string =>
   `  ${l1.padEnd(25)}${v1.padStart(7)}   ${l2.padEnd(25)}${v2.padStart(7)}`;
 
-export async function runStats(exportPath: string, prog: Progress): Promise<void> {
+export const runStats = async (exportPath: string, prog: Progress): Promise<void> => {
   const { exportDir, cleanup } = await resolveExport(exportPath, prog);
   try {
     prog.phase("Loading metadata");
@@ -174,7 +174,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     }
 
     // Most active server
-    const topServer = [...serverMsgCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const topServer = [...serverMsgCounts.entries()].toSorted((a, b) => b[1] - a[1])[0];
     const topServerStr = topServer
       ? `${serverNames.get(topServer[0]) ?? topServer[0]} (${topServer[1].toLocaleString()} msgs)`
       : "(none)";
@@ -185,7 +185,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
         const m = channels.get(channelId);
         return m ? !m.isDM && !m.isGroupDM : false;
       })
-      .sort((a, b) => b[1] - a[1])[0];
+      .toSorted((a, b) => b[1] - a[1])[0];
     let topChannelStr = "(none)";
     if (topChannel) {
       const meta = channels.get(topChannel[0]);
@@ -197,7 +197,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     const DM_PREFIX = "Direct Message with ";
     const topGroupDm = [...msgCounter.counts.entries()]
       .filter(([channelId]) => channels.get(channelId)?.isGroupDM)
-      .sort((a, b) => b[1] - a[1])[0];
+      .toSorted((a, b) => b[1] - a[1])[0];
     let topGroupDmStr = "(none)";
     if (topGroupDm) {
       const meta = channels.get(topGroupDm[0]);
@@ -208,7 +208,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     // Most active DM partner
     const topDm = [...msgCounter.counts.entries()]
       .filter(([channelId]) => channels.get(channelId)?.isDM)
-      .sort((a, b) => b[1] - a[1])[0];
+      .toSorted((a, b) => b[1] - a[1])[0];
     let topDmStr = "(none)";
     if (topDm) {
       const meta = channels.get(topDm[0]);
@@ -220,7 +220,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     }
 
     // Most-used emoji
-    const topEmoji = [...emojiAnalyzer.counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const topEmoji = [...emojiAnalyzer.counts.entries()].toSorted((a, b) => b[1] - a[1])[0];
     const topEmojiStr = topEmoji
       ? `${topEmoji[0]} (${topEmoji[1].toLocaleString()} uses)`
       : "(none found)";
@@ -332,7 +332,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     // Activity over time
     lines.push("", "Activity over time (messages per month)");
     const months = [...temporal.monthly.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .toSorted((a, b) => a[0].localeCompare(b[0]))
       .slice(-TOP);
     if (months.length === 0) {
       lines.push("  (no messages)");
@@ -372,4 +372,4 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
   } finally {
     await cleanup();
   }
-}
+};

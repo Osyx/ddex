@@ -200,7 +200,13 @@ const parseWordsArgs = (args: string[]) => {
     exitError("Error: path-to-export is required\n", WORDS_HELP);
   }
 
-  return { exportPath, top, filterStopWords, languages, outputFile };
+  return {
+    exportPath: exportPath ?? exitError("Error: path-to-export is required\n", WORDS_HELP),
+    top,
+    filterStopWords,
+    languages,
+    outputFile,
+  };
 };
 
 const runWords = async (args: string[]) => {

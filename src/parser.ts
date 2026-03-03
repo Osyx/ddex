@@ -5,6 +5,9 @@ import type { Progress } from "./progress.js";
 
 const isMessageFile = (name: string): boolean => name.toLowerCase() === "messages.json";
 
+const isRecord = (val: unknown): val is Record<string, unknown> =>
+  typeof val === "object" && val !== null && !Array.isArray(val);
+
 const findMessageFiles = async (dir: string): Promise<string[]> => {
   const results: string[] = [];
   const entries = await readdir(dir, { withFileTypes: true });
@@ -53,23 +56,20 @@ export const parseExport = async (
     let rows: unknown[];
     if (Array.isArray(raw)) {
       rows = raw;
-    } else if (
-      typeof raw === "object" &&
-      raw !== null &&
-      "messages" in raw &&
-      Array.isArray((raw as Record<string, unknown>).messages)
-    ) {
-      rows = (raw as Record<string, unknown[]>).messages;
+    } else if (isRecord(raw)) {
+      const msgs = raw.messages;
+      if (!Array.isArray(msgs)) {
+        process.stderr.write(`Warning: ${file} does not contain a top-level array, skipping.\n`);
+        continue;
+      }
+      rows = msgs;
     } else {
       process.stderr.write(`Warning: ${file} does not contain a top-level array, skipping.\n`);
       continue;
     }
     for (const row of rows) {
-      if (typeof row !== "object" || row === null) continue;
-      const content =
-        (row as Record<string, unknown>)["Contents"] ??
-        (row as Record<string, unknown>)["contents"] ??
-        (row as Record<string, unknown>)["content"];
+      if (!isRecord(row)) continue;
+      const content = row["Contents"] ?? row["contents"] ?? row["content"];
       const msg = typeof content === "string" ? content : "";
       if (msg) {
         onContent(msg);

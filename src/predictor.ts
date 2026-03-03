@@ -17,9 +17,11 @@ export interface PredictionResult {
   gender: Prediction | null;
 }
 
+const isRecord = (val: unknown): val is Record<string, unknown> =>
+  typeof val === "object" && val !== null && !Array.isArray(val);
+
 /** Deep-searches a parsed JSON value for an object that has both `targetKey` and `"probability"`. */
 export const findPrediction = (val: unknown, targetKey: string): Prediction | null => {
-  if (!val || typeof val !== "object") return null;
   if (Array.isArray(val)) {
     for (const item of val) {
       const found = findPrediction(item, targetKey);
@@ -27,11 +29,11 @@ export const findPrediction = (val: unknown, targetKey: string): Prediction | nu
     }
     return null;
   }
-  const obj = val as Record<string, unknown>;
-  if (targetKey in obj && "probability" in obj) {
-    return { value: String(obj[targetKey]), probability: Number(obj.probability) };
+  if (!isRecord(val)) return null;
+  if (targetKey in val && "probability" in val) {
+    return { value: String(val[targetKey]), probability: Number(val.probability) };
   }
-  for (const v of Object.values(obj)) {
+  for (const v of Object.values(val)) {
     const found = findPrediction(v, targetKey);
     if (found) return found;
   }
@@ -59,8 +61,8 @@ const parseStream = async (
 
     try {
       const parsed: unknown = JSON.parse(line);
-      if (!result.age) result.age = findPrediction(parsed, "predicted_age");
-      if (!result.gender) result.gender = findPrediction(parsed, "predicted_gender");
+      result.age ??= findPrediction(parsed, "predicted_age");
+      result.gender ??= findPrediction(parsed, "predicted_gender");
     } catch {
       // skip malformed lines
     }
