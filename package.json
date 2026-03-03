@@ -1,6 +1,6 @@
 {
   "name": "ddex",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Discord Data Explorer (ddex) — offline CLI tool that analyses a Discord GDPR data export and reports your most-used words with fuzzy clustering",
   "keywords": [
     "discord",
