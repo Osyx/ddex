@@ -190,10 +190,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     if (topChannel) {
       const meta = channels.get(topChannel[0]);
       const name = meta ? `#${meta.name}` : topChannel[0];
-      const server = meta?.guildName ?? meta?.guildId ?? "";
-      topChannelStr = server
-        ? `${name} in ${server} (${topChannel[1].toLocaleString()} msgs)`
-        : `${name} (${topChannel[1].toLocaleString()} msgs)`;
+      topChannelStr = `${name} (${topChannel[1].toLocaleString()} msgs)`;
     }
 
     // Most active group DM
