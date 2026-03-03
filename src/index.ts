@@ -33,8 +33,9 @@ Commands:
   stats        Show a full summary dashboard of your Discord activity
 
 Options:
-  --version, -V   Print version and exit
-  --help, -h      Show this help message
+  --version, -V        Print version and exit
+  --help, -h           Show this help message
+  --keep-unzipped      When given a .zip, keep the extracted temp folder after the command finishes
 `.trim();
 
 const WORDS_HELP = `
@@ -283,7 +284,13 @@ const runPredictionCmd = async (args: string[]) => {
 };
 
 const main = async () => {
-  const args = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
+
+  // Global flag: --keep-unzipped — strip it before dispatching, pass via env
+  const keepUnzipped = rawArgs.includes("--keep-unzipped");
+  if (keepUnzipped) process.env.DDEX_KEEP_UNZIPPED = "1";
+  const args = rawArgs.filter((a) => a !== "--keep-unzipped");
+
   const cmd = args[0];
 
   if (!cmd) {

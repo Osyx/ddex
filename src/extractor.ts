@@ -84,6 +84,7 @@ export const resolveExport = async (
   input: string,
   prog: Progress,
   filter?: (fileName: string) => boolean,
+  keepUnzipped = process.env.DDEX_KEEP_UNZIPPED === "1",
 ): Promise<{ exportDir: string; cleanup: () => Promise<void> }> => {
   const s = await stat(input);
 
@@ -107,10 +108,20 @@ export const resolveExport = async (
 
   prog.done("Extracted message files");
 
+  if (!keepUnzipped) {
+    process.stderr.write(
+      `\x1b[2m  Tip: pass --keep-unzipped to reuse this extraction next time\x1b[0m\n`,
+    );
+  } else {
+    process.stderr.write(`  Keeping unzipped export at: ${tempDir}\n`);
+  }
+
   return {
     exportDir: tempDir,
     cleanup: async () => {
-      await rm(tempDir, { recursive: true, force: true });
+      if (!keepUnzipped) {
+        await rm(tempDir, { recursive: true, force: true });
+      }
     },
   };
 };
