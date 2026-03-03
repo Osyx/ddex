@@ -58,6 +58,11 @@ export interface PeopleStats {
   topDmPartners: Array<{ name: string; messages: number; voiceHours: number }>;
 }
 
+/** Strip legacy discriminator suffixes like #0 or #1234 from usernames. */
+function stripDiscriminator(name: string): string {
+  return name.replace(/#\d+$/, "").trim();
+}
+
 export function computePeopleStats(
   userData: UserData | null,
   channels: Map<string, ChannelMeta>,
@@ -92,7 +97,9 @@ export function computePeopleStats(
   // Top 10 DM partners by message count
   const topDmPartners = dmChannels
     .map((ch) => ({
-      name: ch.name.startsWith(DM_PREFIX) ? ch.name.slice(DM_PREFIX.length) : ch.name,
+      name: stripDiscriminator(
+        ch.name.startsWith(DM_PREFIX) ? ch.name.slice(DM_PREFIX.length) : ch.name,
+      ),
       messages: channelMsgCounts.get(ch.id) ?? 0,
       voiceHours: voiceHoursByChannel.get(ch.id) ?? 0,
     }))
