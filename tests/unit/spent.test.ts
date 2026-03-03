@@ -81,7 +81,7 @@ describe("buildSpentOutput", () => {
       },
     ];
     const output = buildSpentOutput(makeUser(payments));
-    expect(output).toContain("$19.98 (USD)");
+    expect(output).toContain("$19.98 USD");
   });
 
   test("shows multiple currencies as separate totals", () => {
@@ -102,8 +102,8 @@ describe("buildSpentOutput", () => {
       },
     ];
     const output = buildSpentOutput(makeUser(payments));
-    expect(output).toContain("(USD)");
-    expect(output).toContain("(EUR)");
+    expect(output).toContain("$9.99 USD");
+    expect(output).toContain("$8.00 EUR");
     expect(output).toContain("[USD]");
     expect(output).toContain("[EUR]");
   });
@@ -135,6 +135,28 @@ describe("buildSpentOutput", () => {
     const output = buildSpentOutput(makeUser(payments));
     expect(output).toContain("1 payment)");
     expect(output).not.toContain("1 payments");
+  });
+
+  test("shows virtual currency (orbs) in parentheses after real total", () => {
+    const payments: UserData["payments"] = [
+      {
+        id: "1",
+        amount: 999,
+        currency: "usd",
+        description: "Discord Nitro Monthly",
+        createdAt: "2024-01-01T00:00:00Z",
+      },
+      {
+        id: "2",
+        amount: 500,
+        currency: "orb",
+        description: "Discord Orbs",
+        createdAt: "2024-01-02T00:00:00Z",
+      },
+    ];
+    const output = buildSpentOutput(makeUser(payments));
+    expect(output).toContain("$9.99 USD");
+    expect(output).toContain("5 ORB");
   });
 });
 

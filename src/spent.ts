@@ -14,6 +14,39 @@ interface CurrencyTotals {
   storeCount: number;
 }
 
+/** ISO 4217 fiat currency codes — anything else is treated as virtual (orbs/credits). */
+const FIAT_CURRENCIES = new Set([
+  "USD",
+  "EUR",
+  "GBP",
+  "AUD",
+  "CAD",
+  "JPY",
+  "CHF",
+  "SEK",
+  "NOK",
+  "DKK",
+  "NZD",
+  "SGD",
+  "HKD",
+  "KRW",
+  "BRL",
+  "MXN",
+  "INR",
+  "PLN",
+  "CZK",
+  "HUF",
+  "RON",
+  "TRY",
+  "RUB",
+  "ZAR",
+  "TWD",
+  "THB",
+  "IDR",
+  "MYR",
+  "PHP",
+]);
+
 /** Pure function: formats payment data into the spending summary string. */
 export function buildSpentOutput(userData: UserData | null): string {
   if (!userData || userData.payments.length === 0) {
@@ -24,8 +57,16 @@ export function buildSpentOutput(userData: UserData | null): string {
 
   // Group totals by currency (uppercased)
   const byCurrency = new Map<string, CurrencyTotals>();
+  const byVirtual = new Map<string, number>(); // orbs / credits / etc.
   for (const payment of payments) {
     const currency = payment.currency.toUpperCase();
+    const isFiat = FIAT_CURRENCIES.has(currency);
+
+    if (!isFiat) {
+      byVirtual.set(currency, (byVirtual.get(currency) ?? 0) + payment.amount / 100);
+      continue;
+    }
+
     if (!byCurrency.has(currency)) {
       byCurrency.set(currency, {
         total: 0,
@@ -65,8 +106,22 @@ export function buildSpentOutput(userData: UserData | null): string {
   lines.push("Discord Spending Summary");
   lines.push("─".repeat(Math.min(w, 24)));
 
-  for (const [currency, data] of byCurrency) {
-    lines.push(`Total spent: $${data.total.toFixed(2)} (${currency})`);
+  // Grand total across all fiat currencies, orbs in parentheses
+  const orbSuffix =
+    byVirtual.size > 0
+      ? "  (" + [...byVirtual.entries()].map(([c, v]) => `${v.toFixed(0)} ${c}`).join(", ") + ")"
+      : "";
+  if (byCurrency.size === 0) {
+    lines.push(`Total spent: $0.00${orbSuffix}`);
+  } else if (byCurrency.size === 1) {
+    const [[currency, data]] = [...byCurrency.entries()];
+    lines.push(`Total spent: $${data.total.toFixed(2)} ${currency}${orbSuffix}`);
+  } else {
+    // Multiple fiat currencies — show each, then a note about orbs
+    for (const [currency, data] of byCurrency) {
+      lines.push(`Total spent: $${data.total.toFixed(2)} ${currency}`);
+    }
+    if (orbSuffix) lines.push(`Virtual currency:${orbSuffix.trim()}`);
   }
 
   lines.push("");
