@@ -96,7 +96,7 @@ const streamFromZip = (zipPath: string, prog: Progress): Promise<PredictionResul
         reject(
           new Error(
             "Analytics events file not found in ZIP.\n" +
-              "Expected: package/Activity/analytics/events-YYYY-00000-of-00001.json",
+              "Expected: Activity/analytics/events-YYYY-00000-of-00001.json",
           ),
         ),
       );
