@@ -58,9 +58,9 @@ describe("buildSpentOutput", () => {
     expect(output).toContain("Nitro subscriptions");
     expect(output).toContain("Gifts sent");
     expect(output).toContain("Store / cosmetics");
-    expect(output).toContain("$9.99");
-    expect(output).toContain("$4.99");
-    expect(output).toContain("$2.99");
+    expect(output).toContain("9.99");
+    expect(output).toContain("4.99");
+    expect(output).toContain("2.99");
   });
 
   test("sums total per currency and displays currency code", () => {
@@ -81,7 +81,7 @@ describe("buildSpentOutput", () => {
       },
     ];
     const output = buildSpentOutput(makeUser(payments));
-    expect(output).toContain("$19.98 USD");
+    expect(output).toContain("19.98 USD");
   });
 
   test("shows multiple currencies as separate totals", () => {
@@ -102,8 +102,8 @@ describe("buildSpentOutput", () => {
       },
     ];
     const output = buildSpentOutput(makeUser(payments));
-    expect(output).toContain("$9.99 USD");
-    expect(output).toContain("$8.00 EUR");
+    expect(output).toContain("9.99 USD");
+    expect(output).toContain("8.00 EUR");
     expect(output).toContain("[USD]");
     expect(output).toContain("[EUR]");
   });
@@ -155,7 +155,7 @@ describe("buildSpentOutput", () => {
       },
     ];
     const output = buildSpentOutput(makeUser(payments));
-    expect(output).toContain("$9.99 USD");
+    expect(output).toContain("9.99 USD");
     expect(output).toContain("5 ORB");
   });
 });

@@ -2,7 +2,7 @@ import { resolveExport } from "./extractor.js";
 import { loadUserData, loadAllChannels, loadServersIndex } from "./metadata.js";
 import { analyzeMessages } from "./analyze.js";
 import type { MessageAnalyzer, MessageRow } from "./analyze.js";
-import { scanAnalytics, buildVoiceSessions } from "./analytics.js";
+import { scanAnalytics } from "./analytics.js";
 import type { AnalyticsCollector } from "./analytics.js";
 import { MessageCountAnalyzer } from "./servers.js";
 import {
@@ -50,6 +50,19 @@ class CounterCollector implements AnalyticsCollector {
   }
 }
 
+/** Counts DM calls via call_button_clicked Disconnect events. */
+class DmCallCounter implements AnalyticsCollector {
+  readonly eventTypes = new Set(["call_button_clicked"]);
+  total = 0;
+
+  onEvent(event: Record<string, unknown>): void {
+    if (event.button_name !== "Disconnect") return;
+    if (event.guild_id !== undefined && event.guild_id !== null) return;
+    if (event.channel_type !== "1") return;
+    this.total++;
+  }
+}
+
 const hl = (label: string, value: string, suffix = ""): string =>
   `  ${label.padEnd(22)}${value.padStart(8)}${suffix ? `   ${suffix}` : ""}`;
 
@@ -79,6 +92,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     const sessionCollector = new SessionCollector();
     const voiceCollector = new VoiceTimeCollector();
     const reactionCollector = new ReactionCollector();
+    const dmCallCounter = new DmCallCounter();
     const counterCollector = new CounterCollector([
       "app_opened",
       "login_successful",
@@ -104,7 +118,14 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
       ),
       scanAnalytics(
         exportDir,
-        [notifCollector, sessionCollector, voiceCollector, reactionCollector, counterCollector],
+        [
+          notifCollector,
+          sessionCollector,
+          voiceCollector,
+          reactionCollector,
+          dmCallCounter,
+          counterCollector,
+        ],
         prog,
       ),
     ]);
@@ -116,11 +137,10 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
       voiceCollector.joins.length > 0 ||
       reactionCollector.analyticsFound;
 
-    // Voice stats
-    const voiceSessions = buildVoiceSessions(voiceCollector.joins, voiceCollector.leaves);
-    let totalVoiceMs = 0;
-    for (const s of voiceSessions) totalVoiceMs += s.durationMs;
-    const voiceHours = totalVoiceMs / 3_600_000;
+    // Voice stats: total call/join count (voice joins + DM calls)
+    const voiceJoins = voiceCollector.joins.length;
+    const dmCalls = dmCallCounter.total;
+    const totalCallsAndJoins = voiceJoins + dmCalls;
 
     // Server name lookup
     const serverNames = new Map<string, string>(serversIndex);
@@ -159,16 +179,29 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
       ? `${serverNames.get(topServer[0]) ?? topServer[0]} (${topServer[1].toLocaleString()} msgs)`
       : "(none)";
 
-    // Most active channel
-    const topChannel = [...msgCounter.counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    // Most active server channel (non-DM)
+    const topChannel = [...msgCounter.counts.entries()]
+      .filter(([channelId]) => !channels.get(channelId)?.isDM)
+      .sort((a, b) => b[1] - a[1])[0];
     let topChannelStr = "(none)";
     if (topChannel) {
       const meta = channels.get(topChannel[0]);
-      const name = meta ? (meta.isDM ? meta.name : `#${meta.name}`) : topChannel[0];
-      const server = meta?.guildName ?? meta?.guildId ?? (meta?.isDM ? "(DM)" : "");
+      const name = meta ? `#${meta.name}` : topChannel[0];
+      const server = meta?.guildName ?? meta?.guildId ?? "";
       topChannelStr = server
         ? `${name} in ${server} (${topChannel[1].toLocaleString()} msgs)`
         : `${name} (${topChannel[1].toLocaleString()} msgs)`;
+    }
+
+    // Most active DM partner
+    const topDm = [...msgCounter.counts.entries()]
+      .filter(([channelId]) => channels.get(channelId)?.isDM)
+      .sort((a, b) => b[1] - a[1])[0];
+    let topDmStr = "(none)";
+    if (topDm) {
+      const meta = channels.get(topDm[0]);
+      const name = meta?.name.replace(/#\d+$/, "").trim() ?? topDm[0];
+      topDmStr = `${name} (${topDm[1].toLocaleString()} msgs)`;
     }
 
     // Most-used emoji
@@ -181,13 +214,21 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     let totalSpentStr = "(not available)";
     if (userData && userData.payments.length > 0) {
       const totals = new Map<string, number>();
+      const virtual = new Map<string, number>();
       for (const p of userData.payments) {
         const cur = p.currency.toUpperCase();
-        totals.set(cur, (totals.get(cur) ?? 0) + p.amount / 100);
+        if (cur === "DISCORD_ORB") {
+          virtual.set("Orbs", (virtual.get("Orbs") ?? 0) + p.amount / 100);
+        } else {
+          totals.set(cur, (totals.get(cur) ?? 0) + p.amount / 100);
+        }
       }
-      totalSpentStr = [...totals.entries()]
-        .map(([cur, amt]) => `$${amt.toFixed(2)} ${cur}`)
-        .join(", ");
+      const parts = [...totals.entries()].map(([cur, amt]) => `${amt.toFixed(2)} ${cur}`);
+      if (virtual.size > 0) {
+        const vParts = [...virtual.entries()].map(([label, amt]) => `${amt.toFixed(0)} ${label}`);
+        parts.push(`(${vParts.join(", ")})`);
+      }
+      totalSpentStr = parts.join(", ");
     }
 
     // Friends
@@ -223,6 +264,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
       hl("Total spent:", totalSpentStr),
       hl("Most active server:", topServerStr),
       hl("Most active channel:", topChannelStr),
+      hl("Most active DM:", topDmStr),
       hl("Most-used emoji:", topEmojiStr),
       hl("Total attachments:", attachAnalyzer.totalAttachments.toLocaleString()),
       hl("App opens:", appOpens !== null ? appOpens.toLocaleString() : "(not available)"),
@@ -296,7 +338,11 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
         value: attachAnalyzer.totalAttachments,
         display: attachAnalyzer.totalAttachments.toLocaleString(),
       },
-      { label: "Voice hours", value: voiceHours, display: voiceHours.toFixed(1) + "h" },
+      {
+        label: "Calls & voice joins",
+        value: totalCallsAndJoins,
+        display: totalCallsAndJoins.toLocaleString(),
+      },
     ];
     const maxBreakdown = Math.max(...breakdownItems.map((i) => i.value));
     lines.push("", "Activity breakdown");

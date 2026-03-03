@@ -107,19 +107,21 @@ export function buildSpentOutput(userData: UserData | null): string {
   lines.push("─".repeat(Math.min(w, 24)));
 
   // Grand total across all fiat currencies, orbs in parentheses
+  const fmtVirtual = (c: string, v: number) =>
+    c === "DISCORD_ORB" ? `${v.toFixed(0)} Orbs` : `${v.toFixed(0)} ${c}`;
   const orbSuffix =
     byVirtual.size > 0
-      ? "  (" + [...byVirtual.entries()].map(([c, v]) => `${v.toFixed(0)} ${c}`).join(", ") + ")"
+      ? "  (" + [...byVirtual.entries()].map(([c, v]) => fmtVirtual(c, v)).join(", ") + ")"
       : "";
   if (byCurrency.size === 0) {
-    lines.push(`Total spent: $0.00${orbSuffix}`);
+    lines.push(`Total spent: 0.00${orbSuffix}`);
   } else if (byCurrency.size === 1) {
     const [[currency, data]] = [...byCurrency.entries()];
-    lines.push(`Total spent: $${data.total.toFixed(2)} ${currency}${orbSuffix}`);
+    lines.push(`Total spent: ${data.total.toFixed(2)} ${currency}${orbSuffix}`);
   } else {
     // Multiple fiat currencies — show each, then a note about orbs
     for (const [currency, data] of byCurrency) {
-      lines.push(`Total spent: $${data.total.toFixed(2)} ${currency}`);
+      lines.push(`Total spent: ${data.total.toFixed(2)} ${currency}`);
     }
     if (orbSuffix) lines.push(`Virtual currency:${orbSuffix.trim()}`);
   }
@@ -129,7 +131,7 @@ export function buildSpentOutput(userData: UserData | null): string {
 
   for (const [currency, data] of byCurrency) {
     if (byCurrency.size > 1) lines.push(`  [${currency}]`);
-    const fmt = (n: number) => `$${n.toFixed(2)}`;
+    const fmt = (n: number) => `${n.toFixed(2)}`;
     const pl = (n: number) => `${n} payment${n !== 1 ? "s" : ""}`;
     lines.push(`  Nitro subscriptions  ${fmt(data.nitro).padStart(7)}   (${pl(data.nitroCount)})`);
     lines.push(`  Gifts sent           ${fmt(data.gifts).padStart(7)}   (${pl(data.giftsCount)})`);
@@ -141,7 +143,7 @@ export function buildSpentOutput(userData: UserData | null): string {
 
   for (const payment of recent) {
     const date = payment.createdAt.slice(0, 10);
-    const amount = `$${(payment.amount / 100).toFixed(2)}`;
+    const amount = `${(payment.amount / 100).toFixed(2)}`;
     lines.push(truncate(`  ${date}  ${payment.description.padEnd(30)}  ${amount}`, w));
   }
 
