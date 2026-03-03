@@ -84,21 +84,38 @@ describe("runPrediction", () => {
 
   test("throws when path does not exist", async () => {
     const prog = createProgress();
-    await expect(runPrediction("/nonexistent/path", prog)).rejects.toThrow("Path not found");
+    let err: unknown;
+    try {
+      await runPrediction("/nonexistent/path", prog);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(Error);
+    if (err instanceof Error) expect(err.message).toContain("Path not found");
   });
 
   test("throws when analytics file is missing from directory", async () => {
     const prog = createProgress();
-    await expect(runPrediction(import.meta.dirname, prog)).rejects.toThrow(
-      "Analytics events file not found",
-    );
+    let err: unknown;
+    try {
+      await runPrediction(import.meta.dirname, prog);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(Error);
+    if (err instanceof Error) expect(err.message).toContain("Analytics events file not found");
   });
 
   test("throws for non-directory non-zip input", async () => {
     const prog = createProgress();
     const eventsFile = join(FIXTURE_DIR, "Activity/analytics/events-2025-00000-of-00001.json");
-    await expect(runPrediction(eventsFile, prog)).rejects.toThrow(
-      "must be a directory or a .zip file",
-    );
+    let err: unknown;
+    try {
+      await runPrediction(eventsFile, prog);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(Error);
+    if (err instanceof Error) expect(err.message).toContain("must be a directory or a .zip file");
   });
 });

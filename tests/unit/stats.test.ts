@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "bun:test";
 import { join } from "path";
 import { mkdirSync, writeFileSync, mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
@@ -62,7 +62,7 @@ describe("runStats", () => {
     mkdirSync(join(dir, "messages"), { recursive: true });
     try {
       const prog = createProgress();
-      await expect(runStats(dir, prog)).resolves.toBeUndefined();
+      await runStats(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -80,7 +80,7 @@ describe("runStats", () => {
     ]);
     try {
       const prog = createProgress();
-      await expect(runStats(dir, prog)).resolves.toBeUndefined();
+      await runStats(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -93,7 +93,7 @@ describe("runStats", () => {
     );
     try {
       const prog = createProgress();
-      await expect(runStats(dir, prog)).resolves.toBeUndefined();
+      await runStats(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -106,7 +106,7 @@ describe("runStats", () => {
     );
     try {
       const prog = createProgress();
-      await expect(runStats(dir, prog)).resolves.toBeUndefined();
+      await runStats(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

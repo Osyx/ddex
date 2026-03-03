@@ -99,16 +99,17 @@ describe("buildSessionDurations", () => {
 
 // ─── TemporalAnalyzer ──────────────────────────────────────────────────────────
 
-describe("TemporalAnalyzer", () => {
-  const makeMeta = (id: string): ChannelMeta => ({
-    id,
-    name: `ch-${id}`,
-    isDM: false,
-    dmPartnerId: null,
-    guildId: null,
-    guildName: null,
-  });
+const makeMeta = (id: string): ChannelMeta => ({
+  id,
+  name: `ch-${id}`,
+  isDM: false,
+  isGroupDM: false,
+  dmPartnerId: null,
+  guildId: null,
+  guildName: null,
+});
 
+describe("TemporalAnalyzer", () => {
   test("records messages in correct heatmap slot (Mon=day 0)", () => {
     const analyzer = new TemporalAnalyzer();
     // 2024-01-08 is a Monday
@@ -205,11 +206,17 @@ describe("SessionCollector", () => {
 describe("runTime", () => {
   test("runs on fixture export without throwing", async () => {
     const prog = createProgress();
-    await expect(runTime(FIXTURE_DIR, prog)).resolves.toBeUndefined();
+    await runTime(FIXTURE_DIR, prog);
   });
 
   test("throws for non-existent path", async () => {
     const prog = createProgress();
-    await expect(runTime("/nonexistent/path", prog)).rejects.toThrow();
+    let threw = false;
+    try {
+      await runTime("/nonexistent/path", prog);
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBeTrue();
   });
 });

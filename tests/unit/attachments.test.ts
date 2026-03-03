@@ -74,7 +74,7 @@ describe("runAttachments", () => {
     ]);
     try {
       const prog = createProgress();
-      await expect(runAttachments(dir, prog)).resolves.toBeUndefined();
+      await runAttachments(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -86,7 +86,7 @@ describe("runAttachments", () => {
     ]);
     try {
       const prog = createProgress();
-      await expect(runAttachments(dir, prog)).resolves.toBeUndefined();
+      await runAttachments(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

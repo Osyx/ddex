@@ -27,6 +27,7 @@ const makeDMChannel = (
   id,
   name: `Direct Message with ${name}`,
   isDM: true,
+  isGroupDM: false,
   dmPartnerId,
   guildId: null,
   guildName: null,
@@ -56,6 +57,7 @@ describe("computePeopleStats", () => {
           id: "ch3",
           name: "server-channel",
           isDM: false,
+          isGroupDM: false,
           dmPartnerId: null,
           guildId: "g1",
           guildName: "MyServer",
@@ -171,18 +173,18 @@ describe("computePeopleStats", () => {
 
 // ─── buildPeopleOutput ─────────────────────────────────────────────────────────
 
-describe("buildPeopleOutput", () => {
-  const makeStats = (overrides: Partial<PeopleStats> = {}): PeopleStats => ({
-    friendCount: 5,
-    dmChannelCount: 3,
-    mentionedCount: 2,
-    distinctInteractions: 7,
-    voiceCallsJoined: 4,
-    totalDmVoiceHours: 0,
-    topDmPartners: [],
-    ...overrides,
-  });
+const makeStats = (overrides: Partial<PeopleStats> = {}): PeopleStats => ({
+  friendCount: 5,
+  dmChannelCount: 3,
+  mentionedCount: 2,
+  distinctInteractions: 7,
+  voiceCallsJoined: 4,
+  totalDmVoiceHours: 0,
+  topDmPartners: [],
+  ...overrides,
+});
 
+describe("buildPeopleOutput", () => {
   test("includes all totals fields", () => {
     const output = buildPeopleOutput(
       makeStats({

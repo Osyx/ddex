@@ -1,4 +1,5 @@
-import { readdirSync } from "fs";
+import { readdirSync, createReadStream } from "fs";
+import { createInterface } from "readline";
 import { join } from "path";
 import type { Progress } from "./progress.js";
 
@@ -78,10 +79,9 @@ export const scanAnalytics = async (
   let totalLines = 0;
 
   for (const eventsPath of eventsPaths) {
-    const text = await Bun.file(eventsPath).text();
-    const lines = text.split("\n");
+    const rl = createInterface({ input: createReadStream(eventsPath), crlfDelay: Infinity });
 
-    for (const line of lines) {
+    for await (const line of rl) {
       if (!line) continue;
       totalLines++;
       if (totalLines % 500_000 === 0) {

@@ -6,18 +6,19 @@ import type { ChannelMeta } from "../../src/metadata.js";
 
 const FIXTURE_DIR = join(import.meta.dirname, "../fixtures/servers-export");
 
+const makeMeta = (id: string): ChannelMeta => ({
+  id,
+  name: `channel-${id}`,
+  isDM: false,
+  isGroupDM: false,
+  dmPartnerId: null,
+  guildId: null,
+  guildName: null,
+});
+
 // ─── MessageCountAnalyzer ──────────────────────────────────────────────────────
 
 describe("MessageCountAnalyzer", () => {
-  const makeMeta = (id: string): ChannelMeta => ({
-    id,
-    name: `channel-${id}`,
-    isDM: false,
-    dmPartnerId: null,
-    guildId: null,
-    guildName: null,
-  });
-
   test("counts messages per channel", () => {
     const analyzer = new MessageCountAnalyzer();
     const meta = makeMeta("ch1");
@@ -122,11 +123,17 @@ describe("VoiceCollector", () => {
 describe("runServers", () => {
   test("runs on fixture export without throwing", async () => {
     const prog = createProgress();
-    await expect(runServers(FIXTURE_DIR, prog)).resolves.toBeUndefined();
+    await runServers(FIXTURE_DIR, prog);
   });
 
   test("throws for non-existent path", async () => {
     const prog = createProgress();
-    await expect(runServers("/nonexistent/path", prog)).rejects.toThrow();
+    let threw = false;
+    try {
+      await runServers("/nonexistent/path", prog);
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBeTrue();
   });
 });

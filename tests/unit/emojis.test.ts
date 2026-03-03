@@ -72,7 +72,7 @@ describe("runEmojis", () => {
     ]);
     try {
       const prog = createProgress();
-      await expect(runEmojis(dir, prog)).resolves.toBeUndefined();
+      await runEmojis(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -83,7 +83,7 @@ describe("runEmojis", () => {
     mkdirSync(join(dir, "messages"), { recursive: true });
     try {
       const prog = createProgress();
-      await expect(runEmojis(dir, prog)).resolves.toBeUndefined();
+      await runEmojis(dir, prog);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
