@@ -8,20 +8,20 @@ export interface UserData {
   discriminator: string;
   email: string | null;
   avatarHash: string | null;
-  relationships: Array<{
+  relationships: {
     id: string;
     username: string;
     displayName: string | null;
     discriminator: string;
     avatarHash: string | null;
-  }>;
-  payments: Array<{
+  }[];
+  payments: {
     id: string;
     amount: number;
     currency: string;
     description: string;
     createdAt: string;
-  }>;
+  }[];
 }
 
 export interface ChannelMeta {
@@ -58,27 +58,28 @@ const findFileCI = (parent: string, name: string): string | undefined => {
 
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const strOrNull = (v: unknown): string | null => (typeof v === "string" ? v : null);
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
 
 /** Load user.json from Account/ directory (case-insensitive). */
-export async function loadUserData(exportDir: string): Promise<UserData | null> {
+export const loadUserData = async (exportDir: string): Promise<UserData | null> => {
   const accountDir = findDirCI(exportDir, "account");
   if (!accountDir) return null;
   const userFile = findFileCI(accountDir, "user.json");
   if (!userFile) return null;
 
-  const raw = (await Bun.file(userFile).json()) as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const raw: Record<string, unknown> = await Bun.file(userFile).json();
 
   const relationships: UserData["relationships"] = [];
   if (Array.isArray(raw.relationships)) {
     for (const rel of raw.relationships as unknown[]) {
-      if (typeof rel !== "object" || rel === null) continue;
-      const r = rel as Record<string, unknown>;
-      const user =
-        typeof r.user === "object" && r.user !== null ? (r.user as Record<string, unknown>) : {};
+      if (!isRecord(rel)) continue;
+      const user = isRecord(rel.user) ? rel.user : {};
       relationships.push({
         id: str(user.id),
         username: str(user.username),
-        displayName: strOrNull(r.display_name),
+        displayName: strOrNull(rel.display_name),
         discriminator: str(user.discriminator),
         avatarHash: strOrNull(user.avatar),
       });
@@ -88,14 +89,13 @@ export async function loadUserData(exportDir: string): Promise<UserData | null> 
   const payments: UserData["payments"] = [];
   if (Array.isArray(raw.payments)) {
     for (const pmt of raw.payments as unknown[]) {
-      if (typeof pmt !== "object" || pmt === null) continue;
-      const p = pmt as Record<string, unknown>;
+      if (!isRecord(pmt)) continue;
       payments.push({
-        id: str(p.id),
-        amount: typeof p.amount === "number" ? p.amount : 0,
-        currency: str(p.currency),
-        description: str(p.description),
-        createdAt: str(p.created_at),
+        id: str(pmt.id),
+        amount: typeof pmt.amount === "number" ? pmt.amount : 0,
+        currency: str(pmt.currency),
+        description: str(pmt.description),
+        createdAt: str(pmt.created_at),
       });
     }
   }
@@ -110,7 +110,7 @@ export async function loadUserData(exportDir: string): Promise<UserData | null> 
     relationships,
     payments,
   };
-}
+};
 
 const DM_PREFIX = "Direct Message with ";
 const DISCRIMINATOR_SUFFIX_RE = /#\d{4}$/;
@@ -119,13 +119,14 @@ const DISCRIMINATOR_SUFFIX_RE = /#\d{4}$/;
 const stripDiscriminator = (name: string): string => name.replace(DISCRIMINATOR_SUFFIX_RE, "");
 
 /** Load Messages/index.json (case-insensitive). Returns map of channelId → raw name string. */
-export async function loadMessagesIndex(exportDir: string): Promise<Map<string, string>> {
+export const loadMessagesIndex = async (exportDir: string): Promise<Map<string, string>> => {
   const msgDir = findDirCI(exportDir, "messages");
   if (!msgDir) return new Map();
   const indexFile = findFileCI(msgDir, "index.json");
   if (!indexFile) return new Map();
 
-  const raw = (await Bun.file(indexFile).json()) as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const raw: Record<string, unknown> = await Bun.file(indexFile).json();
   const result = new Map<string, string>();
 
   for (const [channelId, value] of Object.entries(raw)) {
@@ -137,16 +138,17 @@ export async function loadMessagesIndex(exportDir: string): Promise<Map<string, 
   }
 
   return result;
-}
+};
 
 /** Load Servers/index.json (case-insensitive). Returns map of guildId → guild name. */
-export async function loadServersIndex(exportDir: string): Promise<Map<string, string>> {
+export const loadServersIndex = async (exportDir: string): Promise<Map<string, string>> => {
   const serversDir = findDirCI(exportDir, "servers");
   if (!serversDir) return new Map();
   const indexFile = findFileCI(serversDir, "index.json");
   if (!indexFile) return new Map();
 
-  const raw = (await Bun.file(indexFile).json()) as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const raw: Record<string, unknown> = await Bun.file(indexFile).json();
   const result = new Map<string, string>();
 
   for (const [guildId, name] of Object.entries(raw)) {
@@ -154,14 +156,14 @@ export async function loadServersIndex(exportDir: string): Promise<Map<string, s
   }
 
   return result;
-}
+};
 
-async function loadChannelMetaInternal(
+const loadChannelMetaInternal = async (
   channelDir: string,
   channelId: string,
   rawName: string,
   ownUserId: string | null,
-): Promise<ChannelMeta> {
+): Promise<ChannelMeta> => {
   const channelFile = findFileCI(channelDir, "channel.json");
   const isDM = rawName.startsWith(DM_PREFIX);
 
@@ -170,12 +172,10 @@ async function loadChannelMetaInternal(
   let dmPartnerId: string | null = null;
 
   if (channelFile) {
-    const raw = (await Bun.file(channelFile).json()) as Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const raw: Record<string, unknown> = await Bun.file(channelFile).json();
 
-    const guild =
-      typeof raw.guild === "object" && raw.guild !== null
-        ? (raw.guild as Record<string, unknown>)
-        : null;
+    const guild = isRecord(raw.guild) ? raw.guild : null;
     if (guild) {
       guildId = strOrNull(guild.id);
       guildName = strOrNull(guild.name);
@@ -201,22 +201,22 @@ async function loadChannelMetaInternal(
     guildId,
     guildName,
   };
-}
+};
 
 /** Load channel.json for a specific channel directory (case-insensitive). */
-export async function loadChannelMeta(
+export const loadChannelMeta = async (
   channelDir: string,
   channelId: string,
   rawName: string,
-): Promise<ChannelMeta> {
+): Promise<ChannelMeta> => {
   return loadChannelMetaInternal(channelDir, channelId, rawName, null);
-}
+};
 
 /** Load all channels metadata at once (combines index + per-channel channel.json). */
-export async function loadAllChannels(
+export const loadAllChannels = async (
   exportDir: string,
   userData: UserData | null,
-): Promise<Map<string, ChannelMeta>> {
+): Promise<Map<string, ChannelMeta>> => {
   const index = await loadMessagesIndex(exportDir);
   const msgDir = findDirCI(exportDir, "messages");
   const ownUserId = userData?.id ?? null;
@@ -242,4 +242,4 @@ export async function loadAllChannels(
   }
 
   return result;
-}
+};

@@ -8,12 +8,12 @@ import {
   type AnalyticsCollector,
 } from "./analytics.js";
 import type { Progress } from "./progress.js";
-import { termWidth, printOutput, renderBar } from "./display.js";
+import { termWidth, printOutput } from "./display.js";
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /** Try client_track_timestamp (leading-quote format) then plain ISO timestamp. */
-function parseEventTimestamp(event: Record<string, unknown>): Date | null {
+const parseEventTimestamp = (event: Record<string, unknown>): Date | null => {
   const cts = event.client_track_timestamp;
   if (typeof cts === "string") {
     const d = parseAnalyticsTimestamp(cts);
@@ -25,20 +25,17 @@ function parseEventTimestamp(event: Record<string, unknown>): Date | null {
     return isNaN(d.getTime()) ? null : d;
   }
   return null;
-}
-
+};
 /** Scale a heatmap count to a single display character. */
-export function heatmapCell(n: number): string {
+export const heatmapCell = (n: number): string => {
   if (n === 0) return ".";
   if (n < 10) return String(n);
   if (n < 100) return "*";
   return "#";
-}
-
-/** Analyzer that builds a weekly heatmap and monthly activity counts. */
+};
 export class TemporalAnalyzer implements MessageAnalyzer {
   /** heatmap[dayOfWeek][hour], Mon=0..Sun=6 */
-  heatmap: number[][] = Array.from({ length: 7 }, () => new Array<number>(24).fill(0));
+  heatmap: number[][] = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
   monthly = new Map<string, number>();
 
   onMessage(row: MessageRow): void {
@@ -64,11 +61,11 @@ export class NotificationCollector implements AnalyticsCollector {
 /** Collector for join/leave voice channel events. */
 export class VoiceTimeCollector implements AnalyticsCollector {
   eventTypes = new Set(["join_voice_channel", "leave_voice_channel"]);
-  joins: Array<{ ts: Date; channelId: string; guildId: string | null }> = [];
-  leaves: Array<{ ts: Date; channelId: string }> = [];
+  joins: { ts: Date; channelId: string; guildId: string | null }[] = [];
+  leaves: { ts: Date; channelId: string }[] = [];
 
   onEvent(event: Record<string, unknown>): void {
-    const type = event.event_type as string;
+    const type = typeof event.event_type === "string" ? event.event_type : "";
     const channelId = typeof event.channel_id === "string" ? event.channel_id : "";
     if (!channelId) return;
     const ts = parseEventTimestamp(event);
@@ -86,11 +83,11 @@ export class VoiceTimeCollector implements AnalyticsCollector {
 /** Collector for session_start/session_end events. */
 export class SessionCollector implements AnalyticsCollector {
   eventTypes = new Set(["session_start", "session_end"]);
-  starts: Array<{ ts: Date; os: string }> = [];
-  ends: Array<{ ts: Date }> = [];
+  starts: { ts: Date; os: string }[] = [];
+  ends: { ts: Date }[] = [];
 
   onEvent(event: Record<string, unknown>): void {
-    const type = event.event_type as string;
+    const type = typeof event.event_type === "string" ? event.event_type : "";
     const ts = parseEventTimestamp(event);
     if (!ts) return;
 
@@ -111,14 +108,14 @@ export class SessionCollector implements AnalyticsCollector {
 const MAX_SESSION_MS = 24 * 60 * 60 * 1000;
 
 /** Pair session starts/ends by time order (greedy). Discards sessions >24h. */
-export function buildSessionDurations(
-  starts: Array<{ ts: Date; os: string }>,
-  ends: Array<{ ts: Date }>,
-): Array<{ os: string; durationMs: number }> {
-  const sortedStarts = [...starts].sort((a, b) => a.ts.getTime() - b.ts.getTime());
-  const sortedEnds = [...ends].sort((a, b) => a.ts.getTime() - b.ts.getTime());
+export const buildSessionDurations = (
+  starts: { ts: Date; os: string }[],
+  ends: { ts: Date }[],
+): { os: string; durationMs: number }[] => {
+  const sortedStarts = [...starts].toSorted((a, b) => a.ts.getTime() - b.ts.getTime());
+  const sortedEnds = [...ends].toSorted((a, b) => a.ts.getTime() - b.ts.getTime());
 
-  const sessions: Array<{ os: string; durationMs: number }> = [];
+  const sessions: { os: string; durationMs: number }[] = [];
   let endIdx = 0;
 
   for (const start of sortedStarts) {
@@ -133,15 +130,18 @@ export function buildSessionDurations(
   }
 
   return sessions;
-}
+};
 
 /** Render an ASCII bar scaled to maxWidth chars. */
-export function renderBar(count: number, max: number, maxWidth: number): string {
+export const renderBar = (count: number, max: number, maxWidth: number): string => {
   if (max === 0) return "";
   const len = Math.max(1, Math.round((count / max) * maxWidth));
   return "█".repeat(len);
-}
-export async function runTime(exportPath: string, prog: Progress): Promise<void> {
+};
+
+const fmtH = (ms: number) => (ms / 3_600_000).toFixed(1) + "h";
+
+export const runTime = async (exportPath: string, prog: Progress): Promise<void> => {
   const { exportDir, cleanup } = await resolveExport(
     exportPath,
     prog,
@@ -189,9 +189,7 @@ export async function runTime(exportPath: string, prog: Progress): Promise<void>
       entry.durationMs += s.durationMs;
       osSessions.set(s.os, entry);
     }
-    const sortedOS = [...osSessions.entries()].sort((a, b) => b[1].count - a[1].count);
-
-    const fmtH = (ms: number) => (ms / 3_600_000).toFixed(1) + "h";
+    const sortedOS = [...osSessions.entries()].toSorted((a, b) => b[1].count - a[1].count);
 
     const w = termWidth();
     const sep = "─".repeat(Math.min(w, 52));
@@ -250,7 +248,9 @@ export async function runTime(exportPath: string, prog: Progress): Promise<void>
     // Monthly activity — bar width scales with terminal
     const barW = Math.max(10, Math.min(40, w - 22));
     lines.push("\nActivity over time (messages per month):");
-    const months = [...temporalAnalyzer.monthly.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    const months = [...temporalAnalyzer.monthly.entries()].toSorted((a, b) =>
+      a[0].localeCompare(b[0]),
+    );
     if (months.length === 0) {
       lines.push("  (no messages)");
     } else {
@@ -266,4 +266,4 @@ export async function runTime(exportPath: string, prog: Progress): Promise<void>
   } finally {
     await cleanup();
   }
-}
+};

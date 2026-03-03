@@ -47,8 +47,15 @@ const FIAT_CURRENCIES = new Set([
   "PHP",
 ]);
 
+const fmtVirtual = (c: string, v: number) =>
+  c === "DISCORD_ORB" ? `${v.toFixed(0)} Orbs` : `${v.toFixed(0)} ${c}`;
+
+const fmt = (n: number) => n.toFixed(2);
+
+const pl = (n: number) => `${n} payment${n !== 1 ? "s" : ""}`;
+
 /** Pure function: formats payment data into the spending summary string. */
-export function buildSpentOutput(userData: UserData | null): string {
+export const buildSpentOutput = (userData: UserData | null): string => {
   if (!userData || userData.payments.length === 0) {
     return "(no payment records found in this export)";
   }
@@ -96,7 +103,7 @@ export function buildSpentOutput(userData: UserData | null): string {
   }
 
   // Sort payments newest-first for the recent transactions list
-  const sorted = [...payments].sort(
+  const sorted = [...payments].toSorted(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
   const recent = sorted.slice(0, 10);
@@ -107,8 +114,6 @@ export function buildSpentOutput(userData: UserData | null): string {
   lines.push("─".repeat(Math.min(w, 24)));
 
   // Grand total across all fiat currencies, orbs in parentheses
-  const fmtVirtual = (c: string, v: number) =>
-    c === "DISCORD_ORB" ? `${v.toFixed(0)} Orbs` : `${v.toFixed(0)} ${c}`;
   const orbSuffix =
     byVirtual.size > 0
       ? "  (" + [...byVirtual.entries()].map(([c, v]) => fmtVirtual(c, v)).join(", ") + ")"
@@ -116,8 +121,9 @@ export function buildSpentOutput(userData: UserData | null): string {
   if (byCurrency.size === 0) {
     lines.push(`Total spent: 0.00${orbSuffix}`);
   } else if (byCurrency.size === 1) {
-    const [[currency, data]] = [...byCurrency.entries()];
-    lines.push(`Total spent: ${data.total.toFixed(2)} ${currency}${orbSuffix}`);
+    for (const [currency, data] of byCurrency) {
+      lines.push(`Total spent: ${data.total.toFixed(2)} ${currency}${orbSuffix}`);
+    }
   } else {
     // Multiple fiat currencies — show each, then a note about orbs
     for (const [currency, data] of byCurrency) {
@@ -131,8 +137,6 @@ export function buildSpentOutput(userData: UserData | null): string {
 
   for (const [currency, data] of byCurrency) {
     if (byCurrency.size > 1) lines.push(`  [${currency}]`);
-    const fmt = (n: number) => `${n.toFixed(2)}`;
-    const pl = (n: number) => `${n} payment${n !== 1 ? "s" : ""}`;
     lines.push(`  Nitro subscriptions  ${fmt(data.nitro).padStart(7)}   (${pl(data.nitroCount)})`);
     lines.push(`  Gifts sent           ${fmt(data.gifts).padStart(7)}   (${pl(data.giftsCount)})`);
     lines.push(`  Store / cosmetics    ${fmt(data.store).padStart(7)}   (${pl(data.storeCount)})`);
@@ -143,14 +147,14 @@ export function buildSpentOutput(userData: UserData | null): string {
 
   for (const payment of recent) {
     const date = payment.createdAt.slice(0, 10);
-    const amount = `${(payment.amount / 100).toFixed(2)}`;
+    const amount = (payment.amount / 100).toFixed(2);
     lines.push(truncate(`  ${date}  ${payment.description.padEnd(30)}  ${amount}`, w));
   }
 
   return lines.join("\n");
-}
+};
 
-export async function runSpent(exportPath: string, prog: Progress): Promise<void> {
+export const runSpent = async (exportPath: string, prog: Progress): Promise<void> => {
   const { exportDir, cleanup } = await resolveExport(exportPath, prog, ExportFilter.account);
   try {
     prog.phase("Loading user data");
@@ -160,4 +164,4 @@ export async function runSpent(exportPath: string, prog: Progress): Promise<void
   } finally {
     await cleanup();
   }
-}
+};
