@@ -1,6 +1,5 @@
-import { readdirSync, createReadStream } from "fs";
+import { readdirSync } from "fs";
 import { join } from "path";
-import { createInterface } from "readline";
 import type { Progress } from "./progress.js";
 
 export interface AnalyticsCollector {
@@ -72,20 +71,29 @@ export async function scanAnalytics(
     }
   }
 
-  const allEventTypes = [...dispatch.keys()];
+  // Precompile a regex to extract event_type value without full JSON.parse
+  const eventTypeRe = /"event_type":"([^"]+)"/;
   let totalLines = 0;
 
   for (const eventsPath of eventsPaths) {
-    const stream = createReadStream(eventsPath);
-    const rl = createInterface({ input: stream, crlfDelay: Infinity });
+    const text = await Bun.file(eventsPath).text();
+    const lines = text.split("\n");
 
-    for await (const line of rl) {
+    for (let li = 0; li < lines.length; li++) {
+      const line = lines[li]!;
+      if (!line) continue;
       totalLines++;
       if (totalLines % 500_000 === 0) {
         prog.update(`  Scanned ${(totalLines / 1_000_000).toFixed(1)}M lines...`);
       }
 
-      if (!allEventTypes.some((et) => line.includes(et))) continue;
+      // Extract event_type cheaply before doing full JSON.parse
+      const etMatch = eventTypeRe.exec(line);
+      if (!etMatch) continue;
+      const eventType = etMatch[1]!;
+
+      const matching = dispatch.get(eventType);
+      if (!matching) continue;
 
       let parsed: Record<string, unknown>;
       try {
@@ -94,18 +102,10 @@ export async function scanAnalytics(
         continue;
       }
 
-      const eventType = typeof parsed.event_type === "string" ? parsed.event_type : null;
-      if (!eventType) continue;
-
-      const matching = dispatch.get(eventType);
-      if (matching) {
-        for (const collector of matching) {
-          collector.onEvent(parsed);
-        }
+      for (const collector of matching) {
+        collector.onEvent(parsed);
       }
     }
-
-    rl.close();
   }
 
   return totalLines;

@@ -41,64 +41,80 @@ export async function analyzeMessages(
 
   prog.phase("Parsing messages");
   let totalMessages = 0;
+  const BATCH = 8;
 
-  for (let i = 0; i < channelDirs.length; i++) {
-    const dirEntry = channelDirs[i]!;
-    const channelDir = join(messagesDir, dirEntry.name);
-    const channelId = dirEntry.name.slice(1); // strip leading 'c'
+  for (let i = 0; i < channelDirs.length; i += BATCH) {
+    const batch = channelDirs.slice(i, i + BATCH);
 
-    // Find messages.json case-insensitively
-    const fileEntries = readdirSync(channelDir, { withFileTypes: true });
-    const msgFile = fileEntries.find((e) => e.isFile() && e.name.toLowerCase() === "messages.json");
-    if (!msgFile) continue;
+    // Read + parse all files in the batch in parallel
+    const batchResults = await Promise.all(
+      batch.map(async (dirEntry) => {
+        const channelDir = join(messagesDir, dirEntry.name);
+        const channelId = dirEntry.name.slice(1);
 
-    prog.update(`  Parsing ${i + 1}/${channelDirs.length}: ${dirEntry.name}`);
+        const fileEntries = readdirSync(channelDir, { withFileTypes: true });
+        const msgFile = fileEntries.find(
+          (e) => e.isFile() && e.name.toLowerCase() === "messages.json",
+        );
+        if (!msgFile) return null;
 
-    const filePath = join(channelDir, msgFile.name);
-    const raw = (await Bun.file(filePath).json()) as unknown;
+        const filePath = join(channelDir, msgFile.name);
+        const raw = (await Bun.file(filePath).json()) as unknown;
 
-    let rows: unknown[];
-    if (Array.isArray(raw)) {
-      rows = raw;
-    } else if (
-      typeof raw === "object" &&
-      raw !== null &&
-      "messages" in raw &&
-      Array.isArray((raw as Record<string, unknown>).messages)
-    ) {
-      rows = (raw as Record<string, unknown[]>).messages;
-    } else {
-      continue;
-    }
+        let rows: unknown[];
+        if (Array.isArray(raw)) {
+          rows = raw;
+        } else if (
+          typeof raw === "object" &&
+          raw !== null &&
+          "messages" in raw &&
+          Array.isArray((raw as Record<string, unknown>).messages)
+        ) {
+          rows = (raw as Record<string, unknown[]>).messages;
+        } else {
+          return null;
+        }
 
-    const channelMeta: ChannelMeta = channels.get(channelId) ?? {
-      id: channelId,
-      name: dirEntry.name,
-      isDM: false,
-      dmPartnerId: null,
-      guildId: null,
-      guildName: null,
-    };
+        const channelMeta: ChannelMeta = channels.get(channelId) ?? {
+          id: channelId,
+          name: dirEntry.name,
+          isDM: false,
+          isGroupDM: false,
+          dmPartnerId: null,
+          guildId: null,
+          guildName: null,
+        };
 
-    for (const row of rows) {
-      if (typeof row !== "object" || row === null) continue;
-      const r = row as Record<string, unknown>;
-      const contents = typeof r["Contents"] === "string" ? r["Contents"] : "";
-      if (!contents) continue;
+        return { rows, channelMeta, channelId };
+      }),
+    );
 
-      const msgRow: MessageRow = {
-        id: String(r["ID"] ?? ""),
-        timestamp: new Date(String(r["Timestamp"] ?? "")),
-        contents,
-        attachments: typeof r["Attachments"] === "string" ? r["Attachments"] : "",
-        channelId,
-        channelMeta,
-      };
+    prog.update(`  Parsing ${Math.min(i + BATCH, channelDirs.length)}/${channelDirs.length}`);
 
-      for (const analyzer of analyzers) {
-        analyzer.onMessage(msgRow);
+    // Dispatch to analyzers (serial — analyzers may have shared state)
+    for (const result of batchResults) {
+      if (!result) continue;
+      const { rows, channelMeta, channelId } = result;
+      for (const row of rows) {
+        if (typeof row !== "object" || row === null) continue;
+        const r = row as Record<string, unknown>;
+        const contents = typeof r["Contents"] === "string" ? r["Contents"] : "";
+        if (!contents) continue;
+
+        const msgRow: MessageRow = {
+          id: String(r["ID"] ?? ""),
+          timestamp: new Date(String(r["Timestamp"] ?? "")),
+          contents,
+          attachments: typeof r["Attachments"] === "string" ? r["Attachments"] : "",
+          channelId,
+          channelMeta,
+        };
+
+        for (const analyzer of analyzers) {
+          analyzer.onMessage(msgRow);
+        }
+        totalMessages++;
       }
-      totalMessages++;
     }
   }
 
