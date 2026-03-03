@@ -113,6 +113,7 @@ export async function runServers(exportPath: string, prog: Progress): Promise<vo
     const topServers = [...serverMsgCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
 
     const topTextChannels = [...msgAnalyzer.counts.entries()]
+      .filter(([channelId]) => !channels.get(channelId)?.isDM)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
 
