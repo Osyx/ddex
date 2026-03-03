@@ -28,6 +28,7 @@ export interface ChannelMeta {
   id: string;
   name: string;
   isDM: boolean;
+  isGroupDM: boolean;
   dmPartnerId: string | null;
   guildId: string | null;
   guildName: string | null;
@@ -191,7 +192,15 @@ async function loadChannelMetaInternal(
     }
   }
 
-  return { id: channelId, name: rawName, isDM, dmPartnerId, guildId, guildName };
+  return {
+    id: channelId,
+    name: rawName,
+    isDM,
+    isGroupDM: !isDM && guildId === null,
+    dmPartnerId,
+    guildId,
+    guildName,
+  };
 }
 
 /** Load channel.json for a specific channel directory (case-insensitive). */
@@ -224,6 +233,7 @@ export async function loadAllChannels(
           id: channelId,
           name: rawName,
           isDM: rawName.startsWith(DM_PREFIX),
+          isGroupDM: false,
           dmPartnerId: null,
           guildId: null,
           guildName: null,

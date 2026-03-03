@@ -179,9 +179,12 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
       ? `${serverNames.get(topServer[0]) ?? topServer[0]} (${topServer[1].toLocaleString()} msgs)`
       : "(none)";
 
-    // Most active server channel (non-DM)
+    // Most active server channel (non-DM, non-group DM)
     const topChannel = [...msgCounter.counts.entries()]
-      .filter(([channelId]) => !channels.get(channelId)?.isDM)
+      .filter(([channelId]) => {
+        const m = channels.get(channelId);
+        return m ? !m.isDM && !m.isGroupDM : false;
+      })
       .sort((a, b) => b[1] - a[1])[0];
     let topChannelStr = "(none)";
     if (topChannel) {
@@ -193,6 +196,18 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
         : `${name} (${topChannel[1].toLocaleString()} msgs)`;
     }
 
+    // Most active group DM
+    const DM_PREFIX = "Direct Message with ";
+    const topGroupDm = [...msgCounter.counts.entries()]
+      .filter(([channelId]) => channels.get(channelId)?.isGroupDM)
+      .sort((a, b) => b[1] - a[1])[0];
+    let topGroupDmStr = "(none)";
+    if (topGroupDm) {
+      const meta = channels.get(topGroupDm[0]);
+      const name = meta?.name ?? topGroupDm[0];
+      topGroupDmStr = `${name} (${topGroupDm[1].toLocaleString()} msgs)`;
+    }
+
     // Most active DM partner
     const topDm = [...msgCounter.counts.entries()]
       .filter(([channelId]) => channels.get(channelId)?.isDM)
@@ -200,7 +215,10 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     let topDmStr = "(none)";
     if (topDm) {
       const meta = channels.get(topDm[0]);
-      const name = meta?.name.replace(/#\d+$/, "").trim() ?? topDm[0];
+      const rawName = meta?.name ?? topDm[0];
+      const name = rawName.startsWith(DM_PREFIX)
+        ? rawName.slice(DM_PREFIX.length).replace(/#\d+$/, "").trim()
+        : rawName.replace(/#\d+$/, "").trim();
       topDmStr = `${name} (${topDm[1].toLocaleString()} msgs)`;
     }
 
@@ -264,6 +282,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
       hl("Total spent:", totalSpentStr),
       hl("Most active server:", topServerStr),
       hl("Most active channel:", topChannelStr),
+      hl("Most active group DM:", topGroupDmStr),
       hl("Most active DM:", topDmStr),
       hl("Most-used emoji:", topEmojiStr),
       hl("Total attachments:", attachAnalyzer.totalAttachments.toLocaleString()),
