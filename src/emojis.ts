@@ -4,10 +4,10 @@ import { analyzeMessages } from "./analyze.js";
 import { scanAnalytics, type AnalyticsCollector } from "./analytics.js";
 import { loadAllChannels, loadUserData } from "./metadata.js";
 import { resolveExport } from "./extractor.js";
+import { termWidth, printOutput } from "./display.js";
 
 const UNICODE_EMOJI_RE = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu;
 const CUSTOM_EMOJI_RE = /<a?:(\w+):\d+>/g;
-const DIVIDER = "─".repeat(54);
 
 /** Extract all emoji strings from a message text. Returns Unicode emoji chars and `:name:` for custom. */
 export function parseEmojisFromText(text: string): string[] {
@@ -59,17 +59,17 @@ export class ReactionCollector implements AnalyticsCollector {
 const topN = <T>(map: Map<T, number>, n: number): Array<[T, number]> =>
   [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
 
-function printEmojiTable(rows: Array<[string, number]>, customSet: Set<string> | null): void {
-  console.log("  #   Emoji             Count");
+function emojiTableLines(rows: Array<[string, number]>, customSet: Set<string> | null): string[] {
+  const lines = ["  #   Emoji             Count"];
   for (let i = 0; i < rows.length; i++) {
     const [emoji, count] = rows[i]!;
     const rank = String(i + 1).padStart(3);
-    // Emoji/name column: pad to 16 chars (emojis may be wide; use string length)
     const emojiCol = emoji.padEnd(16);
     const countCol = count.toLocaleString().padStart(7);
     const custom = customSet?.has(emoji) ? "  (custom)" : "";
-    console.log(`  ${rank}   ${emojiCol}  ${countCol}${custom}`);
+    lines.push(`  ${rank}   ${emojiCol}  ${countCol}${custom}`);
   }
+  return lines;
 }
 
 export async function runEmojis(exportPath: string, prog: Progress): Promise<void> {
@@ -91,42 +91,48 @@ export async function runEmojis(exportPath: string, prog: Progress): Promise<voi
 
     prog.done("Scan complete");
 
+    const w = termWidth();
+    const divider = "─".repeat(Math.min(w, 54));
     const totalEmojis = [...emojiAnalyzer.counts.values()].reduce((a, b) => a + b, 0);
     const topEmojis = topN(emojiAnalyzer.counts, 10);
     const customEmojis = new Set<string>(
       [...emojiAnalyzer.counts.keys()].filter((k) => k.startsWith(":")),
     );
 
-    console.log("\nEmoji Usage");
-    console.log(DIVIDER);
-
-    console.log("\nSent in messages");
-    console.log(`  Total emojis used: ${totalEmojis.toLocaleString()}`);
+    const lines: string[] = [
+      "",
+      "Emoji Usage",
+      divider,
+      "",
+      "Sent in messages",
+      `  Total emojis used: ${totalEmojis.toLocaleString()}`,
+    ];
 
     if (topEmojis.length > 0) {
-      console.log(`\n  Top ${Math.min(10, topEmojis.length)} emojis`);
-      printEmojiTable(topEmojis, customEmojis);
+      lines.push(`\n  Top ${Math.min(10, topEmojis.length)} emojis`);
+      lines.push(...emojiTableLines(topEmojis, customEmojis));
     }
 
-    console.log("\nReactions given  (from analytics)");
+    lines.push("\nReactions given  (from analytics)");
 
     if (!reactionCollector.analyticsFound) {
-      console.log("  (Not available — no analytics file found)");
+      lines.push("  (Not available — no analytics file found)");
     } else {
       const totalReactions = [...reactionCollector.counts.values()].reduce((a, b) => a + b, 0);
-      console.log(`  Total reactions: ${totalReactions.toLocaleString()}`);
+      lines.push(`  Total reactions: ${totalReactions.toLocaleString()}`);
 
       const topReactions = topN(reactionCollector.counts, 10);
       if (topReactions.length > 0) {
         const customReactions = new Set(
           [...reactionCollector.isCustom.entries()].filter(([, v]) => v).map(([k]) => k),
         );
-        console.log(`\n  Top ${Math.min(10, topReactions.length)} reaction emojis`);
-        printEmojiTable(topReactions, customReactions);
+        lines.push(`\n  Top ${Math.min(10, topReactions.length)} reaction emojis`);
+        lines.push(...emojiTableLines(topReactions, customReactions));
       }
     }
 
-    console.log();
+    lines.push("");
+    printOutput(lines);
   } finally {
     await cleanup();
   }

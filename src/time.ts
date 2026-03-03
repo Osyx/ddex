@@ -8,8 +8,8 @@ import {
   type AnalyticsCollector,
 } from "./analytics.js";
 import type { Progress } from "./progress.js";
+import { termWidth, printOutput, renderBar } from "./display.js";
 
-const SEP = "─".repeat(52);
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 /** Try client_track_timestamp (leading-quote format) then plain ISO timestamp. */
@@ -141,7 +141,6 @@ export function renderBar(count: number, max: number, maxWidth: number): string 
   const len = Math.max(1, Math.round((count / max) * maxWidth));
   return "█".repeat(len);
 }
-
 export async function runTime(exportPath: string, prog: Progress): Promise<void> {
   const { exportDir, cleanup } = await resolveExport(exportPath, prog);
   try {
@@ -190,7 +189,9 @@ export async function runTime(exportPath: string, prog: Progress): Promise<void>
 
     const fmtH = (ms: number) => (ms / 3_600_000).toFixed(1) + "h";
 
-    const lines: string[] = ["", "Temporal Activity", SEP, ""];
+    const w = termWidth();
+    const sep = "─".repeat(Math.min(w, 52));
+    const lines: string[] = ["", "Temporal Activity", sep, ""];
 
     if (hasAnalytics) {
       lines.push(
@@ -214,7 +215,7 @@ export async function runTime(exportPath: string, prog: Progress): Promise<void>
       lines.push("  (analytics not available in this export)");
     }
 
-    // Message heatmap
+    // Message heatmap — 5 + 24*3 = 77 chars; show all hours, truncation handles narrow terminals
     lines.push("", "Message Activity Heatmap (messages per hour)");
     const hourHeader =
       "     " + Array.from({ length: 24 }, (_, h) => String(h).padStart(3)).join("");
@@ -242,7 +243,8 @@ export async function runTime(exportPath: string, prog: Progress): Promise<void>
       );
     }
 
-    // Monthly activity
+    // Monthly activity — bar width scales with terminal
+    const barW = Math.max(10, Math.min(40, w - 22));
     lines.push("\nActivity over time (messages per month):");
     const months = [...temporalAnalyzer.monthly.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     if (months.length === 0) {
@@ -250,13 +252,13 @@ export async function runTime(exportPath: string, prog: Progress): Promise<void>
     } else {
       const maxMonthly = Math.max(...months.map(([, c]) => c));
       for (const [month, count] of months) {
-        const bar = renderBar(count, maxMonthly, 40);
+        const bar = renderBar(count, maxMonthly, barW);
         lines.push(`${month} ${bar} ${count.toLocaleString()}`);
       }
     }
 
     lines.push("");
-    console.log(lines.join("\n"));
+    printOutput(lines);
   } finally {
     await cleanup();
   }

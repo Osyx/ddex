@@ -15,8 +15,7 @@ import {
 import { EmojiMessageAnalyzer, ReactionCollector } from "./emojis.js";
 import { AttachmentsAnalyzer } from "./attachments.js";
 import type { Progress } from "./progress.js";
-
-const RULE = "══════════════════════════════════════════════════════════════";
+import { termWidth, printOutput } from "./display.js";
 const TOP = 24; // max months to show in activity chart
 
 /** Tracks unique active days (YYYY-MM-DD). */
@@ -205,10 +204,16 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
       : null;
 
     // Build output
+    const w = termWidth();
+    const rule = "═".repeat(Math.min(w, 62));
+    // Bar widths scaled to terminal: monthly chart gets more space, breakdown less
+    const monthBarW = Math.max(10, Math.min(40, w - 22));
+    const breakBarW = Math.max(5, Math.min(20, w - 42));
+
     const lines: string[] = [
       "",
       `Discord Data Explorer — Stats Summary`,
-      RULE,
+      rule,
       "",
       "Highlights",
       hl("Messages sent:", totalMessages.toLocaleString(), avgSuffix),
@@ -276,7 +281,7 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     } else {
       const maxMonthly = Math.max(...months.map(([, c]) => c));
       for (const [month, count] of months) {
-        const bar = renderBar(count, maxMonthly, 40);
+        const bar = renderBar(count, maxMonthly, monthBarW);
         lines.push(`${month} ${bar} ${count.toLocaleString()}`);
       }
     }
@@ -296,12 +301,12 @@ export async function runStats(exportPath: string, prog: Progress): Promise<void
     const maxBreakdown = Math.max(...breakdownItems.map((i) => i.value));
     lines.push("", "Activity breakdown");
     for (const item of breakdownItems) {
-      const bar = maxBreakdown > 0 ? renderBar(item.value, maxBreakdown, 20) : "";
-      lines.push(`  ${item.label.padEnd(16)} ${bar.padEnd(20)} ${item.display}`);
+      const bar = maxBreakdown > 0 ? renderBar(item.value, maxBreakdown, breakBarW) : "";
+      lines.push(`  ${item.label.padEnd(16)} ${bar.padEnd(breakBarW)} ${item.display}`);
     }
 
-    lines.push("", RULE, "");
-    console.log(lines.join("\n"));
+    lines.push("", rule, "");
+    printOutput(lines);
   } finally {
     await cleanup();
   }

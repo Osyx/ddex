@@ -2,6 +2,7 @@ import { resolveExport } from "./extractor.js";
 import { loadUserData } from "./metadata.js";
 import type { UserData } from "./metadata.js";
 import type { Progress } from "./progress.js";
+import { termWidth, truncate } from "./display.js";
 
 interface CurrencyTotals {
   total: number;
@@ -59,9 +60,10 @@ export function buildSpentOutput(userData: UserData | null): string {
   );
   const recent = sorted.slice(0, 10);
 
+  const w = termWidth();
   const lines: string[] = [];
   lines.push("Discord Spending Summary");
-  lines.push("─".repeat(24));
+  lines.push("─".repeat(Math.min(w, 24)));
 
   for (const [currency, data] of byCurrency) {
     lines.push(`Total spent: $${data.total.toFixed(2)} (${currency})`);
@@ -85,7 +87,7 @@ export function buildSpentOutput(userData: UserData | null): string {
   for (const payment of recent) {
     const date = payment.createdAt.slice(0, 10);
     const amount = `$${(payment.amount / 100).toFixed(2)}`;
-    lines.push(`  ${date}  ${payment.description.padEnd(30)}  ${amount}`);
+    lines.push(truncate(`  ${date}  ${payment.description.padEnd(30)}  ${amount}`, w));
   }
 
   return lines.join("\n");
