@@ -22,7 +22,7 @@ export class MessageCountAnalyzer implements MessageAnalyzer {
 }
 
 /** Try client_track_timestamp (leading-quote format) then plain ISO timestamp. */
-function parseEventTimestamp(event: Record<string, unknown>): Date | null {
+const parseEventTimestamp = (event: Record<string, unknown>): Date | null => {
   const cts = event.client_track_timestamp;
   if (typeof cts === "string") {
     const d = parseAnalyticsTimestamp(cts);
@@ -34,17 +34,17 @@ function parseEventTimestamp(event: Record<string, unknown>): Date | null {
     return isNaN(d.getTime()) ? null : d;
   }
   return null;
-}
+};
 
 /** Analytics collector for join/leave voice channel events. */
 export class VoiceCollector implements AnalyticsCollector {
   eventTypes = new Set(["join_voice_channel", "leave_voice_channel"]);
-  joins: Array<{ ts: Date; channelId: string; guildId: string | null }> = [];
-  leaves: Array<{ ts: Date; channelId: string }> = [];
+  joins: { ts: Date; channelId: string; guildId: string | null }[] = [];
+  leaves: { ts: Date; channelId: string }[] = [];
   joinCount = 0;
 
   onEvent(event: Record<string, unknown>): void {
-    const type = event.event_type as string;
+    const type = typeof event.event_type === "string" ? event.event_type : "";
     const channelId = typeof event.channel_id === "string" ? event.channel_id : "";
     if (!channelId) return;
     const ts = parseEventTimestamp(event);
@@ -60,7 +60,7 @@ export class VoiceCollector implements AnalyticsCollector {
   }
 }
 
-export async function runServers(exportPath: string, prog: Progress): Promise<void> {
+export const runServers = async (exportPath: string, prog: Progress): Promise<void> => {
   const { exportDir, cleanup } = await resolveExport(
     exportPath,
     prog,
@@ -110,11 +110,11 @@ export async function runServers(exportPath: string, prog: Progress): Promise<vo
       }
     }
 
-    const topServers = [...serverMsgCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const topServers = [...serverMsgCounts.entries()].toSorted((a, b) => b[1] - a[1]).slice(0, 10);
 
     const topTextChannels = [...msgAnalyzer.counts.entries()]
       .filter(([channelId]) => !channels.get(channelId)?.isDM)
-      .sort((a, b) => b[1] - a[1])
+      .toSorted((a, b) => b[1] - a[1])
       .slice(0, 10);
 
     // Voice sessions grouped by channel
@@ -134,7 +134,7 @@ export async function runServers(exportPath: string, prog: Progress): Promise<vo
       voiceByChannel.set(s.channelId, entry);
     }
     const topVoice = [...voiceByChannel.entries()]
-      .sort((a, b) => b[1].durationMs - a[1].durationMs)
+      .toSorted((a, b) => b[1].durationMs - a[1].durationMs)
       .slice(0, 10);
 
     const hasAnalytics = voiceCollector.joins.length > 0 || voiceCollector.leaves.length > 0;
@@ -213,4 +213,4 @@ export async function runServers(exportPath: string, prog: Progress): Promise<vo
   } finally {
     await cleanup();
   }
-}
+};

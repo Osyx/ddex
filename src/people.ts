@@ -6,7 +6,7 @@ import type { MessageAnalyzer, MessageRow } from "./analyze.js";
 import { scanAnalytics, buildVoiceSessions, parseAnalyticsTimestamp } from "./analytics.js";
 import type { AnalyticsCollector } from "./analytics.js";
 import type { Progress } from "./progress.js";
-import { termWidth, printOutput } from "./display.js";
+import { termWidth } from "./display.js";
 
 const DM_PREFIX = "Direct Message with ";
 const MENTION_RE = /<@(\d+)>/g;
@@ -29,8 +29,8 @@ class PeopleMessageAnalyzer implements MessageAnalyzer {
 
 class VoiceCollector implements AnalyticsCollector {
   readonly eventTypes = new Set(["join_voice_channel", "leave_voice_channel"]);
-  readonly joins: Array<{ ts: Date; channelId: string; guildId: string | null }> = [];
-  readonly leaves: Array<{ ts: Date; channelId: string }> = [];
+  readonly joins: { ts: Date; channelId: string; guildId: string | null }[] = [];
+  readonly leaves: { ts: Date; channelId: string }[] = [];
 
   onEvent(event: Record<string, unknown>): void {
     const channelId = typeof event.channel_id === "string" ? event.channel_id : null;
@@ -78,23 +78,21 @@ export interface PeopleStats {
   distinctInteractions: number;
   voiceCallsJoined: number;
   totalDmVoiceHours: number;
-  topDmPartners: Array<{ name: string; messages: number; calls: number }>;
+  topDmPartners: { name: string; messages: number; calls: number }[];
 }
 
 /** Strip legacy discriminator suffixes like #0 or #1234 from usernames. */
-function stripDiscriminator(name: string): string {
-  return name.replace(/#\d+$/, "").trim();
-}
+const stripDiscriminator = (name: string): string => name.replace(/#\d+$/, "").trim();
 
-export function computePeopleStats(
+export const computePeopleStats = (
   userData: UserData | null,
   channels: Map<string, ChannelMeta>,
   channelMsgCounts: Map<string, number>,
   mentionedUserIds: Set<string>,
-  voiceSessions: Array<{ channelId: string; guildId: string | null; durationMs: number }>,
+  voiceSessions: { channelId: string; guildId: string | null; durationMs: number }[],
   voiceJoinsForDM: number,
-  callsByChannel: Map<string, number> = new Map(),
-): PeopleStats {
+  callsByChannel = new Map<string, number>(),
+): PeopleStats => {
   const friendCount = userData?.relationships.length ?? 0;
 
   const dmChannels = [...channels.values()].filter((ch) => ch.isDM);
@@ -120,7 +118,7 @@ export function computePeopleStats(
       calls: callsByChannel.get(ch.id) ?? 0,
     }))
     .filter((p) => p.messages > 0)
-    .sort((a, b) => b.messages - a.messages)
+    .toSorted((a, b) => b.messages - a.messages)
     .slice(0, 10);
 
   return {
@@ -132,9 +130,9 @@ export function computePeopleStats(
     totalDmVoiceHours,
     topDmPartners,
   };
-}
+};
 
-export function buildPeopleOutput(stats: PeopleStats): string {
+export const buildPeopleOutput = (stats: PeopleStats): string => {
   const w = termWidth();
   const hasCallData = stats.topDmPartners.some((p) => p.calls > 0);
   const lines: string[] = [];
@@ -167,9 +165,9 @@ export function buildPeopleOutput(stats: PeopleStats): string {
   }
 
   return lines.map((l) => (l.length > w ? l.slice(0, w - 1) + "…" : l)).join("\n");
-}
+};
 
-export async function runPeople(exportPath: string, prog: Progress): Promise<void> {
+export const runPeople = async (exportPath: string, prog: Progress): Promise<void> => {
   const { exportDir, cleanup } = await resolveExport(
     exportPath,
     prog,
@@ -210,4 +208,4 @@ export async function runPeople(exportPath: string, prog: Progress): Promise<voi
   } finally {
     await cleanup();
   }
-}
+};

@@ -3,6 +3,13 @@ import { join } from "path";
 import type { Progress } from "./progress.js";
 import type { ChannelMeta } from "./metadata.js";
 
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
+
+const isUnknownArray = (v: unknown): v is unknown[] => Array.isArray(v);
+
+const hasMessagesArray = (v: unknown): v is { messages: unknown[] } =>
+  isRecord(v) && isUnknownArray(v.messages);
+
 export interface MessageRow {
   id: string;
   timestamp: Date;
@@ -17,12 +24,12 @@ export interface MessageAnalyzer {
 }
 
 /** Run all analyzers in a single pass over all messages.json files. Returns total message count. */
-export async function analyzeMessages(
+export const analyzeMessages = async (
   exportDir: string,
   analyzers: MessageAnalyzer[],
   channels: Map<string, ChannelMeta>,
   prog: Progress,
-): Promise<number> {
+): Promise<number> => {
   let msgDirName: string | undefined;
   try {
     const entries = readdirSync(exportDir, { withFileTypes: true });
@@ -62,15 +69,10 @@ export async function analyzeMessages(
         const raw = (await Bun.file(filePath).json()) as unknown;
 
         let rows: unknown[];
-        if (Array.isArray(raw)) {
+        if (isUnknownArray(raw)) {
           rows = raw;
-        } else if (
-          typeof raw === "object" &&
-          raw !== null &&
-          "messages" in raw &&
-          Array.isArray((raw as Record<string, unknown>).messages)
-        ) {
-          rows = (raw as Record<string, unknown[]>).messages;
+        } else if (hasMessagesArray(raw)) {
+          rows = raw.messages;
         } else {
           return null;
         }
@@ -96,14 +98,14 @@ export async function analyzeMessages(
       if (!result) continue;
       const { rows, channelMeta, channelId } = result;
       for (const row of rows) {
-        if (typeof row !== "object" || row === null) continue;
-        const r = row as Record<string, unknown>;
+        if (!isRecord(row)) continue;
+        const r = row;
         const contents = typeof r["Contents"] === "string" ? r["Contents"] : "";
         if (!contents) continue;
 
         const msgRow: MessageRow = {
-          id: String(r["ID"] ?? ""),
-          timestamp: new Date(String(r["Timestamp"] ?? "")),
+          id: typeof r["ID"] === "string" ? r["ID"] : "",
+          timestamp: new Date(typeof r["Timestamp"] === "string" ? r["Timestamp"] : ""),
           contents,
           attachments: typeof r["Attachments"] === "string" ? r["Attachments"] : "",
           channelId,
@@ -120,4 +122,4 @@ export async function analyzeMessages(
 
   prog.done(`Parsed ${totalMessages.toLocaleString()} messages`);
   return totalMessages;
-}
+};
