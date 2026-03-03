@@ -6,7 +6,35 @@ import { dirname, join, resolve as resolvePath, sep } from "path";
 import yauzl from "yauzl";
 import type { Progress } from "./progress.js";
 
-const extractFiles = (zipPath: string, destDir: string, prog: Progress): Promise<void> =>
+/** Pre-built file filters for common command needs. */
+export const ExportFilter = {
+  /** Only message JSON files (words, attachments). */
+  messages: (f: string) => f.toLowerCase().startsWith("messages/"),
+  /** Messages + server index (servers command). */
+  messagesAndServers: (f: string) => {
+    const l = f.toLowerCase();
+    return l.startsWith("messages/") || l.startsWith("servers/");
+  },
+  /** Messages + analytics events (time, emojis). */
+  messagesAndActivity: (f: string) => {
+    const l = f.toLowerCase();
+    return l.startsWith("messages/") || l.startsWith("activity/");
+  },
+  /** Account folder only (spent command). */
+  account: (f: string) => f.toLowerCase().startsWith("account/"),
+  /** Messages + analytics + account (people command). */
+  messagesActivityAccount: (f: string) => {
+    const l = f.toLowerCase();
+    return l.startsWith("messages/") || l.startsWith("activity/") || l.startsWith("account/");
+  },
+} as const;
+
+const extractFiles = (
+  zipPath: string,
+  destDir: string,
+  prog: Progress,
+  filter?: (fileName: string) => boolean,
+): Promise<void> =>
   new Promise((resolve, reject) => {
     yauzl.open(zipPath, { lazyEntries: true }, (openErr, zipfile) => {
       if (openErr || !zipfile) return reject(openErr ?? new Error("Failed to open ZIP"));
@@ -20,7 +48,7 @@ const extractFiles = (zipPath: string, destDir: string, prog: Progress): Promise
         i++;
         const isDir = entry.fileName.endsWith("/");
 
-        if (isDir) {
+        if (isDir || (filter && !filter(entry.fileName))) {
           zipfile.readEntry();
           return;
         }
@@ -55,6 +83,7 @@ const extractFiles = (zipPath: string, destDir: string, prog: Progress): Promise
 export const resolveExport = async (
   input: string,
   prog: Progress,
+  filter?: (fileName: string) => boolean,
 ): Promise<{ exportDir: string; cleanup: () => Promise<void> }> => {
   const s = await stat(input);
 
@@ -74,7 +103,7 @@ export const resolveExport = async (
   const tempDir = join(tmpdir(), `ddex-${randomUUID()}`);
   prog.phase("Extracting ZIP");
 
-  await extractFiles(input, tempDir, prog);
+  await extractFiles(input, tempDir, prog, filter);
 
   prog.done("Extracted message files");
 

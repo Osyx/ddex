@@ -2,10 +2,10 @@ import type { Progress } from "./progress.js";
 import type { MessageRow, MessageAnalyzer } from "./analyze.js";
 import { analyzeMessages } from "./analyze.js";
 import { loadAllChannels, loadUserData } from "./metadata.js";
-import { resolveExport } from "./extractor.js";
+import { resolveExport, ExportFilter } from "./extractor.js";
 import type { ChannelMeta } from "./metadata.js";
+import { termWidth, printOutput } from "./display.js";
 
-const DIVIDER = "─".repeat(54);
 const DM_PREFIX = "Direct Message with ";
 
 /** Split an Attachments field string into individual attachment URLs/entries. */
@@ -66,7 +66,7 @@ function serverOrPartner(meta: ChannelMeta): string {
 }
 
 export async function runAttachments(exportPath: string, prog: Progress): Promise<void> {
-  const { exportDir, cleanup } = await resolveExport(exportPath, prog);
+  const { exportDir, cleanup } = await resolveExport(exportPath, prog, ExportFilter.messages);
 
   try {
     const userData = await loadUserData(exportDir);
@@ -78,26 +78,28 @@ export async function runAttachments(exportPath: string, prog: Progress): Promis
     await analyzeMessages(exportDir, [analyzer], channels, prog);
     prog.done("Scan complete");
 
+    const w = termWidth();
+    const divider = "─".repeat(Math.min(w, 54));
     const topChannels = [...analyzer.channelStats.values()]
       .sort((a, b) => b.totalAttachments - a.totalAttachments)
       .slice(0, 10);
 
-    console.log("\nAttachment Activity");
-    console.log(DIVIDER);
-
-    console.log("\nTotals");
     const msgLabel = "Messages with attachments:";
     const attLabel = "Total attachments sent:";
     const labelWidth = Math.max(msgLabel.length, attLabel.length) + 2;
-    console.log(
-      `  ${msgLabel.padEnd(labelWidth)} ${analyzer.messagesWithAttachments.toLocaleString()}`,
-    );
-    console.log(`  ${attLabel.padEnd(labelWidth)} ${analyzer.totalAttachments.toLocaleString()}`);
 
-    console.log("\nTop 10 Channels by attachments");
-    console.log(
+    const lines: string[] = [
+      "",
+      "Attachment Activity",
+      divider,
+      "",
+      "Totals",
+      `  ${msgLabel.padEnd(labelWidth)} ${analyzer.messagesWithAttachments.toLocaleString()}`,
+      `  ${attLabel.padEnd(labelWidth)} ${analyzer.totalAttachments.toLocaleString()}`,
+      "",
+      "Top 10 Channels by attachments",
       `  ${"#".padStart(3)}   ${"Channel".padEnd(24)}  ${"Server / DM Partner".padEnd(22)}  Attachments`,
-    );
+    ];
 
     for (let i = 0; i < topChannels.length; i++) {
       const stat = topChannels[i]!;
@@ -105,10 +107,11 @@ export async function runAttachments(exportPath: string, prog: Progress): Promis
       const channel = channelDisplayName(stat.meta).padEnd(24);
       const server = serverOrPartner(stat.meta).padEnd(22);
       const count = stat.totalAttachments.toLocaleString().padStart(11);
-      console.log(`  ${rank}   ${channel}  ${server}  ${count}`);
+      lines.push(`  ${rank}   ${channel}  ${server}  ${count}`);
     }
 
-    console.log();
+    lines.push("");
+    printOutput(lines);
   } finally {
     await cleanup();
   }

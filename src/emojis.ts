@@ -3,7 +3,7 @@ import type { MessageRow, MessageAnalyzer } from "./analyze.js";
 import { analyzeMessages } from "./analyze.js";
 import { scanAnalytics, type AnalyticsCollector } from "./analytics.js";
 import { loadAllChannels, loadUserData } from "./metadata.js";
-import { resolveExport } from "./extractor.js";
+import { resolveExport, ExportFilter } from "./extractor.js";
 import { termWidth, printOutput } from "./display.js";
 
 const UNICODE_EMOJI_RE = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu;
@@ -73,7 +73,11 @@ function emojiTableLines(rows: Array<[string, number]>, customSet: Set<string> |
 }
 
 export async function runEmojis(exportPath: string, prog: Progress): Promise<void> {
-  const { exportDir, cleanup } = await resolveExport(exportPath, prog);
+  const { exportDir, cleanup } = await resolveExport(
+    exportPath,
+    prog,
+    ExportFilter.messagesAndActivity,
+  );
 
   try {
     const userData = await loadUserData(exportDir);

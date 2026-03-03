@@ -1,4 +1,4 @@
-import { resolveExport } from "./extractor.js";
+import { resolveExport, ExportFilter } from "./extractor.js";
 import { loadUserData, loadAllChannels } from "./metadata.js";
 import type { UserData, ChannelMeta } from "./metadata.js";
 import { analyzeMessages } from "./analyze.js";
@@ -6,6 +6,7 @@ import type { MessageAnalyzer, MessageRow } from "./analyze.js";
 import { scanAnalytics, buildVoiceSessions, parseAnalyticsTimestamp } from "./analytics.js";
 import type { AnalyticsCollector } from "./analytics.js";
 import type { Progress } from "./progress.js";
+import { termWidth, printOutput } from "./display.js";
 
 const DM_PREFIX = "Direct Message with ";
 const MENTION_RE = /<@(\d+)>/g;
@@ -110,9 +111,10 @@ export function computePeopleStats(
 }
 
 export function buildPeopleOutput(stats: PeopleStats): string {
+  const w = termWidth();
   const lines: string[] = [];
   lines.push("Social Graph");
-  lines.push("─".repeat(40));
+  lines.push("─".repeat(Math.min(w, 40)));
   lines.push("");
   lines.push("Totals");
   lines.push(`  Friends:              ${stats.friendCount}`);
@@ -133,11 +135,15 @@ export function buildPeopleOutput(stats: PeopleStats): string {
     );
   }
 
-  return lines.join("\n");
+  return lines.map((l) => (l.length > w ? l.slice(0, w - 1) + "…" : l)).join("\n");
 }
 
 export async function runPeople(exportPath: string, prog: Progress): Promise<void> {
-  const { exportDir, cleanup } = await resolveExport(exportPath, prog);
+  const { exportDir, cleanup } = await resolveExport(
+    exportPath,
+    prog,
+    ExportFilter.messagesActivityAccount,
+  );
   try {
     prog.phase("Loading metadata");
     const userData = await loadUserData(exportDir);

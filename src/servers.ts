@@ -1,4 +1,4 @@
-import { resolveExport } from "./extractor.js";
+import { resolveExport, ExportFilter } from "./extractor.js";
 import { loadAllChannels, loadServersIndex, loadUserData } from "./metadata.js";
 import { analyzeMessages, type MessageAnalyzer, type MessageRow } from "./analyze.js";
 import {
@@ -8,8 +8,7 @@ import {
   type AnalyticsCollector,
 } from "./analytics.js";
 import type { Progress } from "./progress.js";
-
-const SEP = "─".repeat(51);
+import { termWidth, printOutput } from "./display.js";
 
 const lpad = (s: string, w: number): string => s.padStart(w);
 const rpad = (s: string, w: number): string => s.padEnd(w);
@@ -62,7 +61,11 @@ export class VoiceCollector implements AnalyticsCollector {
 }
 
 export async function runServers(exportPath: string, prog: Progress): Promise<void> {
-  const { exportDir, cleanup } = await resolveExport(exportPath, prog);
+  const { exportDir, cleanup } = await resolveExport(
+    exportPath,
+    prog,
+    ExportFilter.messagesAndServers,
+  );
   try {
     prog.phase("Loading metadata");
     const [userData, serversIndex] = await Promise.all([
@@ -136,10 +139,12 @@ export async function runServers(exportPath: string, prog: Progress): Promise<vo
     const hasAnalytics = voiceCollector.joins.length > 0 || voiceCollector.leaves.length > 0;
 
     // Build output
+    const w = termWidth();
+    const sep = "─".repeat(Math.min(w, 51));
     const lines: string[] = [
       "",
       "Server Activity",
-      SEP,
+      sep,
       "",
       "Totals",
       `  Total servers in export:      ${lpad(serversIndex.size.toLocaleString(), 8)}`,
@@ -203,7 +208,7 @@ export async function runServers(exportPath: string, prog: Progress): Promise<vo
     }
 
     lines.push("");
-    console.log(lines.join("\n"));
+    printOutput(lines);
   } finally {
     await cleanup();
   }

@@ -1,4 +1,4 @@
-import { resolveExport } from "./extractor.js";
+import { resolveExport, ExportFilter } from "./extractor.js";
 import { loadUserData } from "./metadata.js";
 import type { UserData } from "./metadata.js";
 import type { Progress } from "./progress.js";
@@ -94,7 +94,7 @@ export function buildSpentOutput(userData: UserData | null): string {
 }
 
 export async function runSpent(exportPath: string, prog: Progress): Promise<void> {
-  const { exportDir, cleanup } = await resolveExport(exportPath, prog);
+  const { exportDir, cleanup } = await resolveExport(exportPath, prog, ExportFilter.account);
   try {
     prog.phase("Loading user data");
     const userData = await loadUserData(exportDir);

@@ -1,4 +1,4 @@
-import { resolveExport } from "./extractor.js";
+import { resolveExport, ExportFilter } from "./extractor.js";
 import { loadAllChannels, loadUserData, type ChannelMeta } from "./metadata.js";
 import { analyzeMessages, type MessageAnalyzer, type MessageRow } from "./analyze.js";
 import {
@@ -142,7 +142,11 @@ export function renderBar(count: number, max: number, maxWidth: number): string 
   return "█".repeat(len);
 }
 export async function runTime(exportPath: string, prog: Progress): Promise<void> {
-  const { exportDir, cleanup } = await resolveExport(exportPath, prog);
+  const { exportDir, cleanup } = await resolveExport(
+    exportPath,
+    prog,
+    ExportFilter.messagesAndActivity,
+  );
   try {
     prog.phase("Loading metadata");
     const userData = await loadUserData(exportDir);

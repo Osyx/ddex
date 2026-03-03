@@ -5,7 +5,7 @@ import { isStopWord, buildStopWordSet, SUPPORTED_LANGUAGES } from "./stopwords.j
 import { cluster } from "./grouper.js";
 import { formatConsole, writeOutput } from "./formatter.js";
 import { createWordDb } from "./db.js";
-import { resolveExport } from "./extractor.js";
+import { resolveExport, ExportFilter } from "./extractor.js";
 import { runPrediction } from "./predictor.js";
 import { runSpent } from "./spent.js";
 import { runPeople } from "./people.js";
@@ -207,7 +207,7 @@ const runWords = async (args: string[]) => {
   const prog = createProgress();
   const stopWords = filterStopWords ? buildStopWordSet(languages) : new Set<string>();
 
-  const { exportDir, cleanup } = await resolveExport(exportPath, prog);
+  const { exportDir, cleanup } = await resolveExport(exportPath, prog, ExportFilter.messages);
 
   let cleaningUp = false;
   const handleExit = async () => {
