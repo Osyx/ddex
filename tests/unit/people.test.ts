@@ -120,14 +120,15 @@ describe("computePeopleStats", () => {
     expect(stats.topDmPartners[2]!.name).toBe("carol");
   });
 
-  test("voice hours accumulate correctly per DM channel", () => {
+  test("voice hours accumulate correctly for DM sessions (no guild_id)", () => {
     const channels = new Map<string, ChannelMeta>([["ch1", makeDMChannel("ch1", "alice", "u1")]]);
     const sessions = [
-      { channelId: "ch1", guildId: null, durationMs: 3_600_000 }, // 1 h
-      { channelId: "ch1", guildId: null, durationMs: 1_800_000 }, // 0.5 h
+      { channelId: "vc1", guildId: null, durationMs: 3_600_000 }, // 1 h DM call
+      { channelId: "vc2", guildId: null, durationMs: 1_800_000 }, // 0.5 h DM call
+      { channelId: "vc3", guildId: "guild1", durationMs: 3_600_000 }, // 1 h server — excluded
     ];
     const stats = computePeopleStats(null, channels, new Map([["ch1", 5]]), new Set(), sessions, 2);
-    expect(stats.topDmPartners[0]!.voiceHours).toBeCloseTo(1.5);
+    expect(stats.totalDmVoiceHours).toBeCloseTo(1.5);
     expect(stats.voiceCallsJoined).toBe(2);
   });
 
@@ -159,6 +160,7 @@ describe("buildPeopleOutput", () => {
     mentionedCount: 2,
     distinctInteractions: 7,
     voiceCallsJoined: 4,
+    totalDmVoiceHours: 0,
     topDmPartners: [],
     ...overrides,
   });
@@ -171,6 +173,7 @@ describe("buildPeopleOutput", () => {
         mentionedCount: 12,
         distinctInteractions: 51,
         voiceCallsJoined: 87,
+        totalDmVoiceHours: 23.5,
       }),
     );
     expect(output).toContain("Friends:              42");
@@ -178,22 +181,21 @@ describe("buildPeopleOutput", () => {
     expect(output).toContain("Distinct users mentioned: 12");
     expect(output).toContain("Total distinct interactions: 51");
     expect(output).toContain("Voice calls joined:   87");
+    expect(output).toContain("DM voice hours:       23.5h");
   });
 
-  test("renders top DM partners table with voice hours", () => {
+  test("renders top DM partners table", () => {
     const stats = makeStats({
       topDmPartners: [
-        { name: "alice", messages: 342, voiceHours: 12.3 },
-        { name: "bob", messages: 201, voiceHours: 0 },
+        { name: "alice", messages: 342 },
+        { name: "bob", messages: 201 },
       ],
     });
     const output = buildPeopleOutput(stats);
     expect(output).toContain("alice");
     expect(output).toContain("342");
-    expect(output).toContain("12.3h");
     expect(output).toContain("bob");
     expect(output).toContain("201");
-    expect(output).toContain("0.0h");
   });
 
   test("has Social Graph header and separator", () => {

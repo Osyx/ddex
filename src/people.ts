@@ -55,7 +55,8 @@ export interface PeopleStats {
   mentionedCount: number;
   distinctInteractions: number;
   voiceCallsJoined: number;
-  topDmPartners: Array<{ name: string; messages: number; voiceHours: number }>;
+  totalDmVoiceHours: number;
+  topDmPartners: Array<{ name: string; messages: number }>;
 }
 
 /** Strip legacy discriminator suffixes like #0 or #1234 from usernames. */
@@ -74,18 +75,10 @@ export function computePeopleStats(
   const friendCount = userData?.relationships.length ?? 0;
 
   const dmChannels = [...channels.values()].filter((ch) => ch.isDM);
-  const dmChannelIds = new Set(dmChannels.map((ch) => ch.id));
 
-  // Voice hours per DM channel
-  const voiceHoursByChannel = new Map<string, number>();
-  for (const session of voiceSessions) {
-    if (dmChannelIds.has(session.channelId)) {
-      voiceHoursByChannel.set(
-        session.channelId,
-        (voiceHoursByChannel.get(session.channelId) ?? 0) + session.durationMs / 3_600_000,
-      );
-    }
-  }
+  // DM voice sessions = sessions with no guild_id (DM calls don't belong to a guild)
+  const dmVoiceSessions = voiceSessions.filter((s) => s.guildId === null);
+  const totalDmVoiceHours = dmVoiceSessions.reduce((sum, s) => sum + s.durationMs, 0) / 3_600_000;
 
   // Distinct interactions = union of friend IDs, DM partner IDs, mentioned user IDs
   const friendIds = new Set((userData?.relationships ?? []).map((r) => r.id));
@@ -101,7 +94,6 @@ export function computePeopleStats(
         ch.name.startsWith(DM_PREFIX) ? ch.name.slice(DM_PREFIX.length) : ch.name,
       ),
       messages: channelMsgCounts.get(ch.id) ?? 0,
-      voiceHours: voiceHoursByChannel.get(ch.id) ?? 0,
     }))
     .filter((p) => p.messages > 0)
     .sort((a, b) => b.messages - a.messages)
@@ -113,6 +105,7 @@ export function computePeopleStats(
     mentionedCount: mentionedUserIds.size,
     distinctInteractions,
     voiceCallsJoined: voiceJoinsForDM,
+    totalDmVoiceHours,
     topDmPartners,
   };
 }
@@ -129,16 +122,15 @@ export function buildPeopleOutput(stats: PeopleStats): string {
   lines.push(`  Distinct users mentioned: ${stats.mentionedCount}`);
   lines.push(`  Total distinct interactions: ${stats.distinctInteractions}`);
   lines.push(`  Voice calls joined:   ${stats.voiceCallsJoined}`);
+  lines.push(`  DM voice hours:       ${stats.totalDmVoiceHours.toFixed(1)}h`);
   lines.push("");
   lines.push("Top 10 DM Partners by messages sent");
-  lines.push(
-    `  ${"#".padEnd(3)} ${"Username".padEnd(20)}  ${"Messages".padStart(8)}   Voice hours`,
-  );
+  lines.push(`  ${"#".padEnd(3)} ${"Username".padEnd(20)}  ${"Messages".padStart(8)}`);
 
   for (let i = 0; i < stats.topDmPartners.length; i++) {
     const p = stats.topDmPartners[i]!;
     lines.push(
-      `  ${String(i + 1).padEnd(3)} ${p.name.slice(0, 20).padEnd(20)}  ${String(p.messages).padStart(8)}   ${`${p.voiceHours.toFixed(1)}h`.padStart(10)}`,
+      `  ${String(i + 1).padEnd(3)} ${p.name.slice(0, 20).padEnd(20)}  ${String(p.messages).padStart(8)}`,
     );
   }
 
@@ -166,10 +158,8 @@ export async function runPeople(exportPath: string, prog: Progress): Promise<voi
       scanAnalytics(exportDir, [voiceCollector], prog),
     ]);
 
-    const dmChannelIds = new Set([...channels.values()].filter((ch) => ch.isDM).map((ch) => ch.id));
-    const voiceJoinsForDM = voiceCollector.joins.filter((j) =>
-      dmChannelIds.has(j.channelId),
-    ).length;
+    // DM voice joins = joins with no guild_id (DM calls don't belong to a guild)
+    const voiceJoinsForDM = voiceCollector.joins.filter((j) => j.guildId === null).length;
     const voiceSessions = buildVoiceSessions(voiceCollector.joins, voiceCollector.leaves);
 
     const stats = computePeopleStats(
