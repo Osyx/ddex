@@ -11,7 +11,7 @@ import type { Progress } from "./progress.js";
 import { termWidth, printOutput } from "./display.js";
 
 const lpad = (s: string, w: number): string => s.padStart(w);
-const rpad = (s: string, w: number): string => s.padEnd(w);
+const rpad = (s: string, w: number): string => s.slice(0, w).padEnd(w);
 
 /** Analyzer that counts messages per channelId. */
 export class MessageCountAnalyzer implements MessageAnalyzer {

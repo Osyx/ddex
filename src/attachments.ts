@@ -104,8 +104,8 @@ export async function runAttachments(exportPath: string, prog: Progress): Promis
     for (let i = 0; i < topChannels.length; i++) {
       const stat = topChannels[i]!;
       const rank = String(i + 1).padStart(3);
-      const channel = channelDisplayName(stat.meta).padEnd(24);
-      const server = serverOrPartner(stat.meta).padEnd(22);
+      const channel = channelDisplayName(stat.meta).slice(0, 24).padEnd(24);
+      const server = serverOrPartner(stat.meta).slice(0, 22).padEnd(22);
       const count = stat.totalAttachments.toLocaleString().padStart(11);
       lines.push(`  ${rank}   ${channel}  ${server}  ${count}`);
     }

@@ -20,7 +20,7 @@ export const createProgress = (): Progress => ({
   },
   done(msg: string) {
     if (isTTY) {
-      process.stderr.write(`\r✓ ${msg}\n`);
+      process.stderr.write(`\r\x1b[K✓ ${msg}\n`);
     } else {
       process.stderr.write(`✓ ${msg}\n`);
     }

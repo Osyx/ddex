@@ -64,7 +64,7 @@ function emojiTableLines(rows: Array<[string, number]>, customSet: Set<string> |
   for (let i = 0; i < rows.length; i++) {
     const [emoji, count] = rows[i]!;
     const rank = String(i + 1).padStart(3);
-    const emojiCol = emoji.padEnd(16);
+    const emojiCol = emoji.slice(0, 16).padEnd(16);
     const countCol = count.toLocaleString().padStart(7);
     const custom = customSet?.has(emoji) ? "  (custom)" : "";
     lines.push(`  ${rank}   ${emojiCol}  ${countCol}${custom}`);

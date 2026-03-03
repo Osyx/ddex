@@ -131,7 +131,7 @@ export function buildPeopleOutput(stats: PeopleStats): string {
   for (let i = 0; i < stats.topDmPartners.length; i++) {
     const p = stats.topDmPartners[i]!;
     lines.push(
-      `  ${String(i + 1).padEnd(3)} ${p.name.padEnd(20)}  ${String(p.messages).padStart(8)}   ${`${p.voiceHours.toFixed(1)}h`.padStart(10)}`,
+      `  ${String(i + 1).padEnd(3)} ${p.name.slice(0, 20).padEnd(20)}  ${String(p.messages).padStart(8)}   ${`${p.voiceHours.toFixed(1)}h`.padStart(10)}`,
     );
   }
 
