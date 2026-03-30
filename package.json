@@ -38,7 +38,7 @@
     "jszip": "^3.10.1",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.50.0",
-    "oxlint-tsgolint": "^0.15.0",
+    "oxlint-tsgolint": "^0.18.1",
     "typescript": "^5.9.3"
   },
   "private": true,
